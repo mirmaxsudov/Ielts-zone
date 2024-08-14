@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="ZoneLifeService" />
+        <module name="IeltsZoneFileService" />
+        <module name="IeltsZoneGetaWayService" />
+        <module name="IeltsZoneRegistryService" />
+        <module name="WriteQuestionsBot" />
+        <module name="IeltsZoneUserService" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="IeltsZoneFileService" options="-parameters" />
+      <module name="IeltsZoneGetaWayService" options="-parameters" />
+      <module name="IeltsZoneRegistryService" options="-parameters" />
+      <module name="IeltsZoneUserService" options="-parameters" />
+      <module name="WriteQuestionsBot" options="-parameters" />
+      <module name="ZoneLifeService" options="-parameters" />
+    </option>
+  </component>
+</project>
