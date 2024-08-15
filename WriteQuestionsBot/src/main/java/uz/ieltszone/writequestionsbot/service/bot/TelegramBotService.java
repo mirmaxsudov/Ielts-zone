@@ -171,6 +171,13 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
         }
 
         groupSenderService.sendApplicationToGroupWithPhotos(request);
+
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        sendMessage.setReplyToMessageId(messageId);
+        sendMessage.setReplyMarkup(getReplyForStudent());
+        sendMessage.setText("Photo sent successfully");
+        customSender(sendMessage);
     }
 
     private void photoHandler(Operation operation, Long chatId, Message message) {
@@ -178,18 +185,19 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
             return;
 
         List<PhotoSize> photo = message.getPhoto();
-        String fileId = photo.get(photo.size() - 1).getFileId();
+        PhotoSize photoSize = photo.get(photo.size() - 1);
+        String fileId = photoSize.getFileId();
 
         ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
         List<Long> attachments = request.getAttachments();
 
         System.out.println("attachments = " + attachments);
 
-        Long attachmentId = downloadPhoto(fileId, chatId);
+        Long attachmentId = downloadPhoto(fileId, chatId, photoSize.getFileUniqueId());
         attachments.add(attachmentId);
     }
 
-    private Long downloadPhoto(String fileId, Long chatId) {
+    private Long downloadPhoto(String fileId, Long chatId, String fileUniqueId) {
         try {
             GetFile getFile = new GetFile();
             getFile.setFileId(fileId);
@@ -204,7 +212,7 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
 
             assert imageBytes != null;
 
-            String name = "photo_" + chatId + "_" + Instant.now().getEpochSecond() + ".png";
+            String name = "photo_" + chatId + "_" + Instant.now().getEpochSecond() + "_" + UUID.randomUUID() + "_" + fileUniqueId + ".png";
             String fileName = BASE_URL + "/" + name;
             Files.write(Paths.get(fileName), imageBytes);
 

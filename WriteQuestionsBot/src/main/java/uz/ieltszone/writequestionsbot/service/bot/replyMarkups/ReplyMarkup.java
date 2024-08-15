@@ -34,12 +34,10 @@ public interface ReplyMarkup {
         markup.setResizeKeyboard(true);
 
         KeyboardRow rw1 = new KeyboardRow();
-        KeyboardRow rw2 = new KeyboardRow();
 
         rw1.add("Upload");
-        rw2.add("Feedback");
 
-        markup.setKeyboard(List.of(rw1, rw2));
+        markup.setKeyboard(List.of(rw1));
 
         return markup;
     }

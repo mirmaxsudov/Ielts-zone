@@ -8,13 +8,7 @@ import org.telegram.telegrambots.bots.DefaultAbsSender;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
-import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
-import org.telegram.telegrambots.meta.api.objects.media.InputMediaDocument;
-import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import uz.ieltszone.writequestionsbot.config.BotConfiguration;
 import uz.ieltszone.writequestionsbot.entity.Attachment;
 import uz.ieltszone.writequestionsbot.entity.User;
@@ -24,17 +18,16 @@ import uz.ieltszone.writequestionsbot.service.base.UserService;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @Component
@@ -85,40 +78,75 @@ public class GroupSenderService extends DefaultAbsSender {
 
     @SneakyThrows
     public void sendApplicationToGroupWithPhotos(ApplicationRequest request) {
-        String url = generateTxtFileStudent(request);
         User user = userService.getByChatId(request.getStudentChatId());
+        String URL = BASE_FILE_URL + "\\" + System.currentTimeMillis() + "_" + UUID.randomUUID();
+        Path target = Paths.get(URL);
 
-        SendMediaGroup mediaGroup = new SendMediaGroup();
-        mediaGroup.setChatId(GROUP_ID);
+        if (!Files.exists(target)) {
+            Files.createDirectory(target);
+        }
 
-        System.out.println(request.getAttachments());
+        String textFileURL = generateTxtFileStudent(request);
+        Path sourcePath = Paths.get(textFileURL);
 
-        List<Long> attachments = request.getAttachments();
+        Path targetPath = target.resolve(sourcePath.getFileName());
 
-        InputMediaPhoto media1 = new InputMediaPhoto();
-        media1.setMedia(new File(attachmentRepository.findById(attachments.get(0)).get().getFilePath()), "img1");
+        System.out.println("Moving text file from: " + sourcePath + " to " + targetPath);
+        Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-        InputMediaPhoto media2 = new InputMediaPhoto();
-        media2.setMedia(new File(attachmentRepository.findById(attachments.get(1)).get().getFilePath()), "img2");
+        for (Long attachmentId : request.getAttachments()) {
+            Attachment attachment = attachmentRepository.findById(attachmentId)
+                    .orElseThrow(() -> new RuntimeException("Attachment not found"));
 
-        mediaGroup.setMedias(List.of(media1, media2));
+            Path attachmentSourcePath = Paths.get(attachment.getFilePath());
+            Path attachmentTargetPath = target.resolve(Paths.get(attachment.getFileName()));
 
-        Message message = execute(mediaGroup).get(new Random().nextInt(request.getAttachments().size()));
+            System.out.println("Moving attachment from: " + attachmentSourcePath + " to " + attachmentTargetPath);
+            Files.move(attachmentSourcePath, attachmentTargetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
 
+        String outputZipFile = URL + ".zip";
+        zipDirectory(URL, outputZipFile);
 
         SendDocument document = new SendDocument();
-        document.setReplyToMessageId(message.getMessageId());
-        document.setCaption("dfads");
-
+        document.setCaption(generateFileCaption(request, user));
+        document.setChatId(GROUP_ID);
         document.setDocument(
                 new InputFile(
-                        new File(url),
-                        generateFileName(user)
+                        new File(outputZipFile),
+                        user.getFirstName() + "'exam.zip"
                 )
         );
-        document.setChatId(GROUP_ID);
-        document.setParseMode(ParseMode.MARKDOWN);
         execute(document);
+
+        CompletableFuture.runAsync(
+                () -> {
+                    deleteFile(outputZipFile);
+                    deleteDirectoryRecursively(Paths.get(URL));
+                }
+        );
+    }
+
+    @SneakyThrows
+    public static void deleteDirectoryRecursively(Path directory) {
+        if (Files.notExists(directory)) {
+            System.out.println("Directory does not exist: " + directory);
+            return;
+        }
+
+        Files.walkFileTree(directory, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     private String generateFileCaption(ApplicationRequest request, User user) {
@@ -138,7 +166,7 @@ public class GroupSenderService extends DefaultAbsSender {
     private void deleteFile(String url) {
         Path path = Paths.get(url);
         try {
-            Files.delete(path);
+            Files.deleteIfExists(path);
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -163,5 +191,51 @@ public class GroupSenderService extends DefaultAbsSender {
         Files.write(path, sb.toString().getBytes());
 
         return absoluteUrl;
+    }
+
+    public static void zipDirectory(String sourceDir, String outputZipFile) throws IOException {
+        File dir = new File(sourceDir);
+        if (!dir.exists() || !dir.isDirectory()) {
+            throw new IllegalArgumentException("The provided path is not a valid directory.");
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(outputZipFile);
+             ZipOutputStream zos = new ZipOutputStream(fos)) {
+
+            zipFilesRecursively(dir, dir.getName(), zos);
+        }
+    }
+
+    private static void zipFilesRecursively(File fileToZip, String fileName, ZipOutputStream zos) throws IOException {
+        if (fileToZip.isHidden()) {
+            return;
+        }
+
+        if (fileToZip.isDirectory()) {
+            if (fileName.endsWith("/")) {
+                zos.putNextEntry(new ZipEntry(fileName));
+                zos.closeEntry();
+            } else {
+                zos.putNextEntry(new ZipEntry(fileName + "/"));
+                zos.closeEntry();
+            }
+            File[] children = fileToZip.listFiles();
+            if (children != null) {
+                for (File childFile : children) {
+                    zipFilesRecursively(childFile, fileName + "/" + childFile.getName(), zos);
+                }
+            }
+            return;
+        }
+
+        try (FileInputStream fis = new FileInputStream(fileToZip)) {
+            ZipEntry zipEntry = new ZipEntry(fileName);
+            zos.putNextEntry(zipEntry);
+            byte[] bytes = new byte[1024];
+            int length;
+            while ((length = fis.read(bytes)) >= 0) {
+                zos.write(bytes, 0, length);
+            }
+        }
     }
 }
