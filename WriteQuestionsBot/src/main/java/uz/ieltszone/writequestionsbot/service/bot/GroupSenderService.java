@@ -67,7 +67,7 @@ public class GroupSenderService extends DefaultAbsSender {
         );
         document.setChatId(GROUP_ID);
         document.setParseMode(ParseMode.MARKDOWN);
-        document.setCaption(" adfsad");
+        document.setCaption(generateFileCaption(request, user));
 
         execute(document);
 
@@ -111,6 +111,7 @@ public class GroupSenderService extends DefaultAbsSender {
         SendDocument document = new SendDocument();
         document.setCaption(generateFileCaption(request, user));
         document.setChatId(GROUP_ID);
+        document.setParseMode(ParseMode.MARKDOWN);
         document.setDocument(
                 new InputFile(
                         new File(outputZipFile),
@@ -150,11 +151,16 @@ public class GroupSenderService extends DefaultAbsSender {
     }
 
     private String generateFileCaption(ApplicationRequest request, User user) {
-        return "#" + request.getTask() + " #" + request.getLearningCenter() + "\n" +
-                "```Short-infoℹ️\n" +
-                "FIO - " + user.getFirstName() + "\n" +
-                "Submitted time - " + request.getWhenTime() + "\n" +
-                "\n ```";
+        return String.format(
+                """
+                        #%s #%s
+
+                        Student name - %s
+                        """,
+                request.getLearningCenter().name(),
+                request.getTask().name(),
+                user.getFirstName()
+        );
     }
 
     private String generateFileName(User user) {
@@ -174,15 +180,30 @@ public class GroupSenderService extends DefaultAbsSender {
 
     @SneakyThrows(IOException.class)
     public String generateTxtFileStudent(ApplicationRequest request) {
+        User user = userService.getByChatId(request.getStudentChatId());
+
         Path base = Paths.get(BASE_FILE_URL);
-        if (!Files.exists(base)) {
+        if (!Files.exists(base))
             Files.createDirectories(base);
-        }
 
         String fileName = System.currentTimeMillis() + "_" + request.getStudentChatId() + ".txt";
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Test Content for Student Chat ID: ").append(request.getStudentChatId()).append("\n");
+
+        sb.append(String.format(
+                        """
+                                 Student's name and surname - %s %s
+                                 Submitted time - %s
+                                                                \s
+                                 Student's exam place - %s
+                                 Type of task - %s
+                                                                \s
+                                 Student's question - '%s'
+                                \s""", user.getFirstName(), user.getLastName() == null ? "" :
+                                user.getLastName(), request.getWhenTime(), request.getLearningCenter(),
+                        request.getTask(), request.getQuestionAsText()
+                )
+        );
 
         String absoluteUrl = BASE_FILE_URL + "\\" + fileName;
         Path path = Paths.get(absoluteUrl);

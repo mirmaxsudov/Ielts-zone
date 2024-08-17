@@ -18,8 +18,4 @@ public class Attachment {
     private Long id;
     private String fileName;
     private String filePath;
-
-    @ManyToOne
-    @JoinColumn(name = "application_id")
-    private Application application;
 }

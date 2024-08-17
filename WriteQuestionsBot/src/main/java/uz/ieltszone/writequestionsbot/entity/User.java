@@ -30,7 +30,4 @@ public class User {
     private Boolean isBlock;
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.STUDENT;
-
-    @OneToMany(mappedBy = "user")
-    private List<Application> applications;
 }

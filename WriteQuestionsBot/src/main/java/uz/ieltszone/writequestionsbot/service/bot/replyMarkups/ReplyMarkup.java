@@ -28,20 +28,6 @@ public interface ReplyMarkup {
         return markup;
     }
 
-    default ReplyKeyboardMarkup getReplyForStudent() {
-        ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
-        markup.setSelective(true);
-        markup.setResizeKeyboard(true);
-
-        KeyboardRow rw1 = new KeyboardRow();
-
-        rw1.add("Upload");
-
-        markup.setKeyboard(List.of(rw1));
-
-        return markup;
-    }
-
     default ReplyKeyboardMarkup getReplyForUploadForCenter() {
         ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
         markup.setSelective(true);
@@ -60,6 +46,22 @@ public interface ReplyMarkup {
         rows.add(back);
 
         markup.setKeyboard(rows);
+
+        return markup;
+    }
+
+    default ReplyKeyboardMarkup getAskNextStep(Task nextTask) {
+        ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
+        markup.setSelective(true);
+        markup.setResizeKeyboard(true);
+
+        KeyboardRow row1 = new KeyboardRow();
+        row1.add("Next to " + nextTask.name());
+
+        KeyboardRow row2 = new KeyboardRow();
+        row2.add("Back");
+
+        markup.setKeyboard(List.of(row1, row2));
 
         return markup;
     }
