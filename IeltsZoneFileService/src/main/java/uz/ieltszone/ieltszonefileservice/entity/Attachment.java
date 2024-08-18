@@ -19,4 +19,5 @@ public class Attachment {
     private String fileName;
     private String fileType;
     private String fileUrl;
+    private String extension;
 }

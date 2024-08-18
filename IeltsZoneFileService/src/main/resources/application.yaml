@@ -2,17 +2,17 @@ server:
   port: 8083
 
 spring:
-  application:
-    name: IELTS-ZONE-FILE-SERVICE
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/ielts_zone
+    url: jdbc:postgresql://localhost:5432/ielts
     username: postgres
-    password: 1212
+    password: postgres
+    driver-class-name: org.postgresql.Driver
   jpa:
-    show-sql: true
     hibernate:
       ddl-auto: update
+    show-sql: true
+  application:
+    name: IELTS-ZONE-FILE-SERVICE
   jackson:
     serialization:
       fail-on-empty-beans: false
@@ -25,3 +25,5 @@ eureka:
   instance:
     hostname: localhost
 
+file:
+  upload-dir: IeltsZoneFileService\src\main\resources\files
