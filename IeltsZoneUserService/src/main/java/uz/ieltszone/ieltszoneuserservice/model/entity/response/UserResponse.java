@@ -1,22 +1,20 @@
-package uz.ieltszone.ieltszoneuserservice.model.entity.request;
+package uz.ieltszone.ieltszoneuserservice.model.entity.response;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Setter;
 import uz.ieltszone.ieltszoneuserservice.model.entity.enums.UserRole;
 
 import java.time.LocalDate;
 
-@Getter
 @Setter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserRequest {
+public class UserResponse {
     private String firstName;
     private String lastName;
-    private String password;
-    private String phoneNumber;
     private LocalDate birthDate;
+    private LocalDate joinedAt;
     private String email;
     private UserRole role;
-    private Long attachmentId;
+    private AttachmentResponse attachment;
+
 }

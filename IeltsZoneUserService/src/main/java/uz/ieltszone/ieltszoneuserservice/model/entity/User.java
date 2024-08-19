@@ -20,11 +20,11 @@ public class User {
     private Long id;
     private String firstName;
     private String lastName;
-    private String username;
     private String password;
     private String phoneNumber;
     private LocalDate birthDate;
     private LocalDate joinedAt;
     private String email;
     private UserRole role;
+    private Long attachmentId;
 }
