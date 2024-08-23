@@ -2,7 +2,10 @@ package uz.ieltszone.zonelifeservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import uz.ieltszone.zonelifeservice.entity.enums.ExamLevel;
+import uz.ieltszone.zonelifeservice.entity.enums.ExamType;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,13 +19,24 @@ public class Exam {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Double writingTotalBall;
-    private Double readingTotalBall;
-    private Double speakingTotalBall;
-    private Double listeningTotalBall;
-    private Long excelFileId;
-    private LocalDateTime addedAt;
+    private Float writing;
+    private Float reading;
+    private Float speaking;
+    private Float listening;
+    private Float total;
+    private LocalDate examDate;
+    private LocalDate addedAt;
     private Long teacherId;
+
+    @Enumerated(EnumType.STRING)
+    private ExamLevel examLevel;
+
+    @Enumerated(EnumType.STRING)
+    private ExamType examType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Rate rate;
+
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Result> results;
 }

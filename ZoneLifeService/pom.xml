@@ -65,24 +65,12 @@
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.7.0</version>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.3.0</version>
         </dependency>
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>uz.ielts-zone</groupId>
-            <artifactId>IeltsZoneUserService</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>uz.ielts-zone</groupId>
-            <artifactId>IeltsZoneUserService</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
     <dependencyManagement>

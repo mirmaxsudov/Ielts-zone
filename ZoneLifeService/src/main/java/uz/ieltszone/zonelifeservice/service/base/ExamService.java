@@ -1,5 +1,6 @@
 package uz.ieltszone.zonelifeservice.service.base;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.multipart.MultipartFile;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 

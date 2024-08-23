@@ -1,5 +1,7 @@
 package uz.ieltszone.zonelifeservice.service.impl;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -15,7 +17,7 @@ import uz.ieltszone.zonelifeservice.service.base.ExamService;
 import uz.ieltszone.zonelifeservice.service.base.ResultService;
 import uz.ieltszone.zonelifeservice.service.feign.FileFeign;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,15 +32,14 @@ public class ExamServiceImpl implements ExamService {
     @Modifying
     @Transactional
     public ApiResponse<?> save(Long teacherId, MultipartFile file) {
+
         Exam exam = new Exam();
 
-        exam.setAddedAt(LocalDateTime.now());
+        exam.setAddedAt(LocalDate.now());
         exam.setTeacherId(teacherId);
 
         ApiResponse<ExamResponse> apiResponse = fileFeign.uploadExcel(file);
         ExamResponse examResponse = apiResponse.getData();
-
-        exam.setExcelFileId(examResponse.getExcelFileId());
 
         List<ResultResponse> resultResponses = examResponse.getResultResponses();
 
@@ -50,10 +51,10 @@ public class ExamServiceImpl implements ExamService {
 
         TotalSums totals = resultResponses.stream()
                 .reduce(new TotalSums(), (acc, resultResponse) -> {
-                    acc.listeningTotal += resultResponse.getListening() != null ? resultResponse.getListening() : 0.0;
-                    acc.readingTotal += resultResponse.getReading() != null ? resultResponse.getReading() : 0.0;
-                    acc.speakingTotal += resultResponse.getSpeaking() != null ? resultResponse.getSpeaking() : 0.0;
-                    acc.writingTotal += resultResponse.getWriting() != null ? resultResponse.getWriting() : 0.0;
+                    acc.listeningTotal += resultResponse.getListening() != null ? resultResponse.getListening() : 0.0f;
+                    acc.readingTotal += resultResponse.getReading() != null ? resultResponse.getReading() : 0.0f;
+                    acc.speakingTotal += resultResponse.getSpeaking() != null ? resultResponse.getSpeaking() : 0.0f;
+                    acc.writingTotal += resultResponse.getWriting() != null ? resultResponse.getWriting() : 0.0f;
                     return acc;
                 }, (a, b) -> {
                     a.listeningTotal += b.listeningTotal;
@@ -63,10 +64,10 @@ public class ExamServiceImpl implements ExamService {
                     return a;
                 });
 
-        exam.setListeningTotalBall(totals.listeningTotal);
-        exam.setReadingTotalBall(totals.readingTotal);
-        exam.setSpeakingTotalBall(totals.speakingTotal);
-        exam.setWritingTotalBall(totals.writingTotal);
+        exam.setListening(totals.listeningTotal);
+        exam.setReading(totals.readingTotal);
+        exam.setSpeaking(totals.speakingTotal);
+        exam.setWriting(totals.writingTotal);
 
         examRepository.save(exam);
 
@@ -82,9 +83,9 @@ public class ExamServiceImpl implements ExamService {
     }
 
     static class TotalSums {
-        private Double listeningTotal;
-        private Double readingTotal;
-        private Double speakingTotal;
-        private Double writingTotal;
+        private Float listeningTotal;
+        private Float readingTotal;
+        private Float speakingTotal;
+        private Float writingTotal;
     }
 }

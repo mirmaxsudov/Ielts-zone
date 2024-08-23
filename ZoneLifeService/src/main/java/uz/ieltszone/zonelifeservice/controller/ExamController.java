@@ -2,8 +2,8 @@ package uz.ieltszone.zonelifeservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import uz.ieltszone.zonelifeservice.aop.annotations.ExistsUserById;
+import uz.ieltszone.zonelifeservice.entity.request.ExamRequest;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.service.base.ExamService;
 
@@ -15,8 +15,9 @@ public class ExamController {
     private final ExamService examService;
 
     @PostMapping("/save/{teacherId}")
-    public ApiResponse<?> save(@PathVariable("teacherId") @ExistsUserById Long teacherId, @RequestPart("excel") MultipartFile file) {
-        return examService.save(teacherId, file);
+    public ApiResponse<?> save(@PathVariable("teacherId") @ExistsUserById Long teacherId, @RequestBody ExamRequest examRequest) {
+        System.out.println("save");
+        return null;
     }
 
     @DeleteMapping("/delete/{teacherId}")

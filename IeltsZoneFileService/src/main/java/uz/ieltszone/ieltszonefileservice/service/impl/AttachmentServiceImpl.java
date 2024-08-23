@@ -143,19 +143,19 @@ public class AttachmentServiceImpl implements AttachmentService {
                         switch (cellValue) {
                             case "writing" -> {
                                 Cell nextCell = row.getCell(cell.getColumnIndex() + 1);
-                                valueMap.put("writing", getCellValueAsDouble(nextCell));
+                                valueMap.put("writing", getCellValueAsFloat(nextCell));
                             }
                             case "reading" -> {
                                 Cell nextCell = row.getCell(cell.getColumnIndex() + 1);
-                                valueMap.put("reading", getCellValueAsDouble(nextCell));
+                                valueMap.put("reading", getCellValueAsFloat(nextCell));
                             }
                             case "listening" -> {
                                 Cell nextCell = row.getCell(cell.getColumnIndex() + 1);
-                                valueMap.put("listening", getCellValueAsDouble(nextCell));
+                                valueMap.put("listening", getCellValueAsFloat(nextCell));
                             }
                             case "speaking" -> {
                                 Cell nextCell = row.getCell(cell.getColumnIndex() + 1);
-                                valueMap.put("speaking", getCellValueAsDouble(nextCell));
+                                valueMap.put("speaking", getCellValueAsFloat(nextCell));
                             }
                         }
                     }
@@ -179,16 +179,16 @@ public class AttachmentServiceImpl implements AttachmentService {
                 .success("Success", examResponse);
     }
 
-    private Double getCellValueAsDouble(Cell cell) {
+    private Float getCellValueAsFloat(Cell cell) {
         if (cell == null)
             return null;
 
         switch (cell.getCellType()) {
             case NUMERIC:
-                return cell.getNumericCellValue();
+                return (float) cell.getNumericCellValue();
             case STRING:
                 try {
-                    return Double.parseDouble(cell.getStringCellValue());
+                    return Float.parseFloat(cell.getStringCellValue());
                 } catch (NumberFormatException e) {
                     return null;
                 }

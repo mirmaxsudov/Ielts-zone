@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @Builder
@@ -16,4 +18,9 @@ public class Reward {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private Long createdBy;
+    private String rewardName;
+    private String description;
+    private String imageId;
+    private LocalDate createdAt;
 }

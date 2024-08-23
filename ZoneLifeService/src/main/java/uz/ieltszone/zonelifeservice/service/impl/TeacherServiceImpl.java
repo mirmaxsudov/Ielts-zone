@@ -14,6 +14,7 @@ public class TeacherServiceImpl implements TeacherService {
 
     @Override
     public ApiResponse<TeacherResponse> getById(Long teacherId) {
+//    userFeign.getById(teacherId);
         return null;
     }
 }
