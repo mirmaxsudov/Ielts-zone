@@ -1,10 +1,9 @@
 package uz.ieltszone.ieltszoneuserservice.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.UserRequest;
+import uz.ieltszone.ieltszoneuserservice.model.entity.request.UserRequestUpdate;
 import uz.ieltszone.ieltszoneuserservice.model.entity.response.UserResponse;
 import uz.ieltszone.ieltszoneuserservice.payload.ApiResponse;
 import uz.ieltszone.ieltszoneuserservice.service.base.UserService;
@@ -18,5 +17,45 @@ public class UserController {
     @PostMapping("/save")
     public ApiResponse<UserResponse> save(UserRequest userRequest) {
         return userService.save(userRequest);
+    }
+
+    @PutMapping("/update/{userId}")
+    public ApiResponse<UserResponse> update(@RequestBody UserRequestUpdate userRequest, @PathVariable("userId") Long userId) {
+        return userService.update(userRequest, userId);
+    }
+
+    @GetMapping("/exists/{userId}")
+    public boolean existsById(@PathVariable("userId") Long userId) {
+        return userService.existsById(userId);
+    }
+
+    @GetMapping("/{userId}")
+    public UserResponse getById(@PathVariable("userId") Long userId) {
+        return userService.getById(userId);
+    }
+
+    @GetMapping("/email/{email}")
+    public UserResponse getByEmail(@PathVariable("email") String email) {
+        return userService.getByEmail(email);
+    }
+
+    @GetMapping("/phoneNumber/{phoneNumber}")
+    public UserResponse getByPhoneNumber(@PathVariable("phoneNumber") String phoneNumber) {
+        return userService.getByPhoneNumber(phoneNumber);
+    }
+
+    @GetMapping("/existsByEmail/{email}")
+    public boolean existsByEmail(@PathVariable("email") String email) {
+        return userService.existsByEmail(email);
+    }
+
+    @GetMapping("/all")
+    public Iterable<UserResponse> getAll() {
+        return userService.getAll();
+    }
+
+    @PatchMapping("/update-img/{userId}")
+    public ApiResponse<UserResponse> updateAttachment(@PathVariable("userId") Long userId, @RequestParam("attachmentId") Long attachmentId) {
+        return userService.updateAttachment(userId, attachmentId);
     }
 }

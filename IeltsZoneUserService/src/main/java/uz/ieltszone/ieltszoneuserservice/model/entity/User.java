@@ -25,6 +25,7 @@ public class User {
     private LocalDate birthDate;
     private LocalDate joinedAt;
     private String email;
+    @Enumerated(EnumType.STRING)
     private UserRole role;
     private Long attachmentId;
 }

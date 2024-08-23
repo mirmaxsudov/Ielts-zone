@@ -26,4 +26,12 @@ eureka:
     hostname: localhost
 
 file:
-  upload-dir: IeltsZoneFileService\src\main\resources\files
+  upload-dir: C:\Abdurahmon\Photo & Videos\Bot
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha

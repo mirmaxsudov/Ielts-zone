@@ -10,8 +10,9 @@ public class RouteConfig {
     @Bean
     public RouteLocator routeLocator(RouteLocatorBuilder locatorBuilder) {
         return locatorBuilder.routes()
-                .route(r -> r.path("/api/v1/zone-life/**")
-                        .uri("lb://ZONE-LIFE-SERVICE")
+                .route(
+                        r -> r.path("/api/v1/zone-life/**")
+                                .uri("lb://ZONE-LIFE-SERVICE")
                 ).route(
                         r -> r.path("/api/v1/attachment/**")
                                 .uri("lb://IELTS-ZONE-FILE-SERVICE")
