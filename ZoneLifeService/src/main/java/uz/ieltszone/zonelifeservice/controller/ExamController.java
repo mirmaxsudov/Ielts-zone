@@ -16,8 +16,7 @@ public class ExamController {
 
     @PostMapping("/save/{teacherId}")
     public ApiResponse<?> save(@PathVariable("teacherId") @ExistsUserById Long teacherId, @RequestBody ExamRequest examRequest) {
-        System.out.println("save");
-        return null;
+        return examService.save(teacherId, examRequest);
     }
 
     @DeleteMapping("/delete/{teacherId}")

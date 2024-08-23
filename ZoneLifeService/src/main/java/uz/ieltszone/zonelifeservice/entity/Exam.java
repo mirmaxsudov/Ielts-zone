@@ -27,6 +27,7 @@ public class Exam {
     private LocalDate examDate;
     private LocalDate addedAt;
     private Long teacherId;
+    private Long excelFileId;
 
     @Enumerated(EnumType.STRING)
     private ExamLevel examLevel;
@@ -35,6 +36,7 @@ public class Exam {
     private ExamType examType;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rate_id")
     private Rate rate;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

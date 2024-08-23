@@ -8,9 +8,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResultResponse {
-    private Double writing;
-    private Double reading;
-    private Double listening;
-    private Double speaking;
-    private Double total;
+    private Float writing;
+    private Float reading;
+    private Float listening;
+    private Float speaking;
+    private Float total;
 }

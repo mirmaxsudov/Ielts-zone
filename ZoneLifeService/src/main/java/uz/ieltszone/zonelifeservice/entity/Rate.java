@@ -19,6 +19,6 @@ public class Rate {
     private Long teacherId;
     private LocalDate date;
     private Float avg;
-    @OneToMany
+    @OneToMany(mappedBy = "rate", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Exam> exams;
 }

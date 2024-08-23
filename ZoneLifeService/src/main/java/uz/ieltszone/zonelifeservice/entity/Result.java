@@ -14,10 +14,10 @@ public class Result {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Double writingBall;
-    private Double readingBall;
-    private Double speakingBall;
-    private Double listeningBall;
+    private Float writingBall;
+    private Float readingBall;
+    private Float speakingBall;
+    private Float listeningBall;
     @ManyToOne(fetch = FetchType.LAZY)
     private Exam exam;
 }

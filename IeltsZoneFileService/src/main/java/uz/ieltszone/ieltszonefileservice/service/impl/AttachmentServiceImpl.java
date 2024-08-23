@@ -134,7 +134,7 @@ public class AttachmentServiceImpl implements AttachmentService {
 
             Sheet sheet = workbook.getSheetAt(0);
 
-            Map<String, Double> valueMap = new HashMap<>();
+            Map<String, Float> valueMap = new HashMap<>();
 
             for (Row row : sheet) {
                 for (Cell cell : row) {

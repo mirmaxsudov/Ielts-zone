@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uz.ieltszone.zonelifeservice.entity.Exam;
 import uz.ieltszone.zonelifeservice.entity.Result;
+import uz.ieltszone.zonelifeservice.entity.request.ResultRequest;
 import uz.ieltszone.zonelifeservice.entity.response.ResultResponse;
 import uz.ieltszone.zonelifeservice.repository.ResultRepository;
 import uz.ieltszone.zonelifeservice.service.base.ResultService;
@@ -21,8 +22,8 @@ public class ResultServiceImpl implements ResultService {
     }
 
     @Override
-    public void save(List<ResultResponse> resultResponses, Exam exam) {
-        for (ResultResponse resultResponse : resultResponses) {
+    public void save(List<ResultRequest> resultResponses, Exam exam) {
+        for (ResultRequest resultResponse : resultResponses) {
             Result result = new Result();
             result.setExam(exam);
             result.setListeningBall(resultResponse.getListening());

@@ -9,6 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uz.ieltszone.zonelifeservice.entity.Exam;
+import uz.ieltszone.zonelifeservice.entity.request.ExamRequest;
+import uz.ieltszone.zonelifeservice.entity.request.ExamRequestInner;
+import uz.ieltszone.zonelifeservice.entity.request.ResultRequest;
 import uz.ieltszone.zonelifeservice.entity.response.ExamResponse;
 import uz.ieltszone.zonelifeservice.entity.response.ResultResponse;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
@@ -31,19 +34,22 @@ public class ExamServiceImpl implements ExamService {
     @Override
     @Modifying
     @Transactional
-    public ApiResponse<?> save(Long teacherId, MultipartFile file) {
-
+    public ApiResponse<?> save(Long teacherId, ExamRequest examRequest) {
         Exam exam = new Exam();
 
-        exam.setAddedAt(LocalDate.now());
         exam.setTeacherId(teacherId);
+        exam.setAddedAt(LocalDate.now());
+        exam.setExamType(examRequest.getExamType());
+        exam.setExamLevel(examRequest.getExamLevel());
+        exam.setExamDate(examRequest.getExamDate());
 
-        ApiResponse<ExamResponse> apiResponse = fileFeign.uploadExcel(file);
-        ExamResponse examResponse = apiResponse.getData();
+        ExamRequestInner examRequestInner = examRequest.getExamRequestInner();
 
-        List<ResultResponse> resultResponses = examResponse.getResultResponses();
+        exam.setExcelFileId(examRequestInner.getExcelFileId());
 
         examRepository.save(exam);
+
+        List<ResultRequest> resultResponses = examRequestInner.getResultResponses();
 
         CompletableFuture.runAsync(
                 () -> resultService.save(resultResponses, exam)
