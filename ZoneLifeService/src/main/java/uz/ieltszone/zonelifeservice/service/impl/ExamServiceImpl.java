@@ -1,6 +1,8 @@
 package uz.ieltszone.zonelifeservice.service.impl;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +17,7 @@ import uz.ieltszone.zonelifeservice.service.feign.FileFeign;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +27,8 @@ public class ExamServiceImpl implements ExamService {
     private final FileFeign fileFeign;
 
     @Override
+    @Modifying
+    @Transactional
     public ApiResponse<?> save(Long teacherId, MultipartFile file) {
         Exam exam = new Exam();
 
@@ -38,7 +43,10 @@ public class ExamServiceImpl implements ExamService {
         List<ResultResponse> resultResponses = examResponse.getResultResponses();
 
         examRepository.save(exam);
-        resultService.save(resultResponses, exam);
+
+        CompletableFuture.runAsync(
+                () -> resultService.save(resultResponses, exam)
+        );
 
         TotalSums totals = resultResponses.stream()
                 .reduce(new TotalSums(), (acc, resultResponse) -> {
@@ -63,6 +71,14 @@ public class ExamServiceImpl implements ExamService {
         examRepository.save(exam);
 
         return new ApiResponse<>().success("Successfully saved");
+    }
+
+    @Override
+    @Transactional
+    public ApiResponse<?> delete(Long teacherId, Long examId) {
+        resultService.deleteByExamId(examId);
+        examRepository.deleteById(examId);
+        return new ApiResponse<>().success("Successfully deleted");
     }
 
     static class TotalSums {

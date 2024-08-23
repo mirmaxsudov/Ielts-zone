@@ -5,4 +5,5 @@ import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 
 public interface ExamService {
     ApiResponse<?> save(Long teacherId, MultipartFile file);
+    ApiResponse<?> delete(Long teacherId, Long examId);
 }

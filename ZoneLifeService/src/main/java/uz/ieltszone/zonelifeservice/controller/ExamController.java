@@ -18,4 +18,9 @@ public class ExamController {
     public ApiResponse<?> save(@PathVariable("teacherId") @ExistsUserById Long teacherId, @RequestPart("excel") MultipartFile file) {
         return examService.save(teacherId, file);
     }
+
+    @DeleteMapping("/delete/{teacherId}")
+    private ApiResponse<?> delete(@PathVariable("teacherId") @ExistsUserById Long teacherId, @RequestParam("examId") Long examId) {
+        return examService.delete(teacherId, examId);
+    }
 }

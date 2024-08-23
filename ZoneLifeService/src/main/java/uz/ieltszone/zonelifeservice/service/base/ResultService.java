@@ -10,4 +10,6 @@ public interface ResultService {
     Result save(ResultResponse resultResponse);
 
     void save(List<ResultResponse> resultResponses, Exam exam);
+
+    void deleteByExamId(Long examId);
 }

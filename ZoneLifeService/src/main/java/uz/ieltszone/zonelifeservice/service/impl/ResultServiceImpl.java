@@ -33,4 +33,9 @@ public class ResultServiceImpl implements ResultService {
             resultRepository.save(result);
         }
     }
+
+    @Override
+    public void deleteByExamId(Long examId) {
+        resultRepository.deleteByExamId(examId);
+    }
 }
