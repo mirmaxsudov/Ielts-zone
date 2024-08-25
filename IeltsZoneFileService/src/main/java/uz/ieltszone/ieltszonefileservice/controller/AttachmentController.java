@@ -41,4 +41,9 @@ public class AttachmentController {
     public ApiResponse<?> deleteById(@PathVariable Long attachmentId) {
         return attachmentService.deleteById(attachmentId);
     }
+
+    @GetMapping("/exists/{attachmentId}")
+    public ApiResponse<Boolean> existsAttachment(@PathVariable("attachmentId") Long attachmentId) {
+        return attachmentService.existsAttachment(attachmentId);
+    }
 }

@@ -3,20 +3,27 @@ package uz.ieltszone.ieltszoneuserservice.aop.validations;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import uz.ieltszone.ieltszoneuserservice.aop.annotations.UniqueEmailChecker;
-import uz.ieltszone.ieltszoneuserservice.service.base.UserService;
+import uz.ieltszone.ieltszoneuserservice.repository.UserRepository;
 
-@Component
 @RequiredArgsConstructor
 public class UniqueEmailValidator implements ConstraintValidator<UniqueEmailChecker, String> {
-    private final UserService userService;
+
+    private final UserRepository userRepository;
 
     @Override
-    public boolean isValid(String email, ConstraintValidatorContext constraintValidatorContext) {
+    public void initialize(UniqueEmailChecker constraintAnnotation) {
+    }
+
+    @Override
+    public boolean isValid(String email, ConstraintValidatorContext context) {
         if (email == null || email.isBlank())
             return true;
 
-        return !userService.existsByEmail(email);
+        boolean b = userRepository.existsByEmail(email);
+
+        System.out.println("b = " + b);
+        
+        return !b;
     }
 }

@@ -6,7 +6,7 @@ spring:
     name: IELTS-ZONE-USER-SERVICE
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/ielts_zone
+    url: jdbc:postgresql://localhost:5432/ielts
     username: postgres
     password: postgres
   jpa:

@@ -179,6 +179,12 @@ public class AttachmentServiceImpl implements AttachmentService {
                 .success("Success", examResponse);
     }
 
+    @Override
+    public ApiResponse<Boolean> existsAttachment(Long attachmentId) {
+        return new ApiResponse<Boolean>()
+                .success(attachmentRepository.existsById(attachmentId));
+    }
+
     private Float getCellValueAsFloat(Cell cell) {
         if (cell == null)
             return null;

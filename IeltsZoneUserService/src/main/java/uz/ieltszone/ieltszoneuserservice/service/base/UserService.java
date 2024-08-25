@@ -16,6 +16,8 @@ public interface UserService {
 
     boolean existsByEmail(String email);
 
+    boolean existsByPhoneNumber(String phoneNumber);
+
     ApiResponse<UserResponse> update(UserRequestUpdate userRequest, Long userId);
 
     Iterable<UserResponse> getAll();

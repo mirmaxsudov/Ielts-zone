@@ -21,4 +21,6 @@ public interface AttachmentService {
     ResponseEntity<FileUrlResource> getPhoto(Long attachmentId);
 
     ApiResponse<ExamResponse> saveExcelAndReturnValues(MultipartFile file);
+
+    ApiResponse<Boolean> existsAttachment(Long attachmentId);
 }

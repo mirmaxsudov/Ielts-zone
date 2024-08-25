@@ -5,4 +5,6 @@ import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 
 public interface TeacherService {
     ApiResponse<TeacherResponse> getById(Long teacherId);
+
+    ApiResponse<Long> getRatingForTeacherAndAllTheTime(Long teacherId);
 }

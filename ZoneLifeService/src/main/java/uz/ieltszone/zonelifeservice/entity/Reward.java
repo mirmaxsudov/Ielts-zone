@@ -21,6 +21,6 @@ public class Reward {
     private Long createdBy;
     private String rewardName;
     private String description;
-    private String imageId;
+    private Long imageId;
     private LocalDate createdAt;
 }

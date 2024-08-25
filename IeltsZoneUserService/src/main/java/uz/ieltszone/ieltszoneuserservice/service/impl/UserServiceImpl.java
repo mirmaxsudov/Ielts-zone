@@ -2,6 +2,7 @@ package uz.ieltszone.ieltszoneuserservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import uz.ieltszone.ieltszoneuserservice.exceptions.CustomAlreadyExistException;
 import uz.ieltszone.ieltszoneuserservice.exceptions.CustomBadRequestException;
 import uz.ieltszone.ieltszoneuserservice.exceptions.CustomNotFoundException;
 import uz.ieltszone.ieltszoneuserservice.feign.AttachmentFeign;
@@ -25,6 +26,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ApiResponse<UserResponse> save(UserRequest userRequest) {
+        if (existsByEmail(userRequest.getEmail()))
+            throw new CustomAlreadyExistException("User already exists with email: " + userRequest.getEmail());
+        else if (existsByPhoneNumber(userRequest.getPhoneNumber()))
+            throw new CustomAlreadyExistException("User already exists with phone number: " + userRequest.getPhoneNumber());
+
         User user = userMapper.toEntity(userRequest);
         userRepository.save(user);
 
@@ -65,6 +71,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByPhoneNumber(String phoneNumber) {
+        return userRepository.existsByPhoneNumber(phoneNumber);
     }
 
     private User getByIdForBackend(Long userId) {

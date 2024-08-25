@@ -17,27 +17,28 @@ public class UserMapper {
 
     public User toEntity(UserRequest userRequest) {
         return User.builder()
-                .firstName(userRequest.getFirstName())
-                .lastName(userRequest.getLastName())
-                .phoneNumber(userRequest.getPhoneNumber())
-                .email(userRequest.getEmail())
-                .password(userRequest.getPassword())
                 .joinedAt(LocalDate.now())
                 .role(userRequest.getRole())
+                .email(userRequest.getEmail())
+                .gender(userRequest.getGender())
+                .password(userRequest.getPassword())
+                .lastName(userRequest.getLastName())
                 .birthDate(userRequest.getBirthDate())
+                .firstName(userRequest.getFirstName())
+                .phoneNumber(userRequest.getPhoneNumber())
                 .attachmentId(userRequest.getAttachmentId())
                 .build();
     }
 
     public UserResponse toResponse(User user) {
         return UserResponse.builder()
-                .id(user.getId())
+                .birthDate(user.getBirthDate())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .birthDate(user.getBirthDate())
                 .joinedAt(user.getJoinedAt())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .id(user.getId())
                 .attachmentResponse(
                         user.getAttachmentId() == null ? null :
                                 AttachmentResponse.builder()

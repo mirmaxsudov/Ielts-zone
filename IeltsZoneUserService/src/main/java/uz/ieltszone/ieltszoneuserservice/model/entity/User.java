@@ -2,6 +2,7 @@ package uz.ieltszone.ieltszoneuserservice.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import uz.ieltszone.ieltszoneuserservice.model.entity.enums.Gender;
 import uz.ieltszone.ieltszoneuserservice.model.entity.enums.UserRole;
 
 import java.time.LocalDate;
@@ -27,5 +28,7 @@ public class User {
     private String email;
     @Enumerated(EnumType.STRING)
     private UserRole role;
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
     private Long attachmentId;
 }

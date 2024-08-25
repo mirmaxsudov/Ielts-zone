@@ -22,4 +22,7 @@ public interface FileFeign {
 
     @PostMapping(value = "/save-excel-and-return-values", consumes = "multipart/form-data", produces = "application/json")
     ApiResponse<ExamResponse> uploadExcel(@RequestParam("excel") MultipartFile file);
+
+    @GetMapping("/exists/{attachmentId}")
+    ApiResponse<Boolean> existsAttachment(@PathVariable("attachmentId") Long attachmentId);
 }

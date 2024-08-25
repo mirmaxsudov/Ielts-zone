@@ -19,4 +19,9 @@ public class TeacherController {
     public ApiResponse<TeacherResponse> getById(@PathVariable("teacherId") Long teacherId) {
         return teacherService.getById(teacherId);
     }
+
+    @GetMapping("/get-rating-for-teacher/{teacherId}")
+    public ApiResponse<Long> getRatingForTeacherAndAllTheTime(@PathVariable("teacherId") Long teacherId) {
+        return teacherService.getRatingForTeacherAndAllTheTime(teacherId);
+    }
 }
