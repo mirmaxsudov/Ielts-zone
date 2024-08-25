@@ -4,8 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import uz.ieltszone.zonelifeservice.aop.annotations.ExistsUserById;
 import uz.ieltszone.zonelifeservice.entity.request.ExamRequest;
+import uz.ieltszone.zonelifeservice.entity.response.ResultResponse;
+import uz.ieltszone.zonelifeservice.entity.response.teacher_exam.ExamTeacherResponse;
+import uz.ieltszone.zonelifeservice.entity.response.teacher_exam.TeachersExamsResponse;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.service.base.ExamService;
+
+import java.util.List;
 
 
 @RestController
@@ -19,8 +24,18 @@ public class ExamController {
         return examService.save(teacherId, examRequest);
     }
 
+    @GetMapping("/get-exams-by-teacher-id/{teacherId}")
+    public ApiResponse<TeachersExamsResponse> getExamsByTeacherId(@PathVariable("teacherId") @ExistsUserById Long teacherId) {
+        return examService.getExamsByTeacherId(teacherId);
+    }
+
+    @GetMapping("/get-results-by-exam-id/{examId}")
+    public ApiResponse<List<ResultResponse>> getResultsByExamId(@PathVariable("examId") Long examId) {
+        return examService.getResultsByExamId(examId);
+    }
+
     @DeleteMapping("/delete/{teacherId}")
-    private ApiResponse<?> delete(@PathVariable("teacherId") @ExistsUserById Long teacherId, @RequestParam("examId") Long examId) {
+    public ApiResponse<?> delete(@PathVariable("teacherId") @ExistsUserById Long teacherId, @RequestParam("examId") Long examId) {
         return examService.delete(teacherId, examId);
     }
 }

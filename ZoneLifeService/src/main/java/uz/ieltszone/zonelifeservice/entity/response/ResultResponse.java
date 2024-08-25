@@ -8,6 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResultResponse {
+    private Long id;
     private Float writing;
     private Float reading;
     private Float listening;

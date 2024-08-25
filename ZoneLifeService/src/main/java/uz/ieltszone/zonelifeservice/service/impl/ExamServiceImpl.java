@@ -1,24 +1,25 @@
 package uz.ieltszone.zonelifeservice.service.impl;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import uz.ieltszone.zonelifeservice.entity.Exam;
+import uz.ieltszone.zonelifeservice.entity.Result;
 import uz.ieltszone.zonelifeservice.entity.request.ExamRequest;
 import uz.ieltszone.zonelifeservice.entity.request.ExamRequestInner;
 import uz.ieltszone.zonelifeservice.entity.request.ResultRequest;
-import uz.ieltszone.zonelifeservice.entity.response.ExamResponse;
 import uz.ieltszone.zonelifeservice.entity.response.ResultResponse;
+import uz.ieltszone.zonelifeservice.entity.response.TeacherResponse;
+import uz.ieltszone.zonelifeservice.entity.response.teacher_exam.TeachersExamsResponse;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.repository.ExamRepository;
 import uz.ieltszone.zonelifeservice.service.base.ExamService;
 import uz.ieltszone.zonelifeservice.service.base.ResultService;
 import uz.ieltszone.zonelifeservice.service.feign.FileFeign;
+import uz.ieltszone.zonelifeservice.service.feign.UserFeign;
+import uz.ieltszone.zonelifeservice.service.mapper.ExamMapper;
+import uz.ieltszone.zonelifeservice.service.mapper.ResultMapper;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,6 +31,9 @@ public class ExamServiceImpl implements ExamService {
     private final ExamRepository examRepository;
     private final ResultService resultService;
     private final FileFeign fileFeign;
+    private final UserFeign userFeign;
+    private final ExamMapper examMapper;
+    private final ResultMapper resultMapper;
 
     @Override
     @Modifying
@@ -86,6 +90,45 @@ public class ExamServiceImpl implements ExamService {
         resultService.deleteByExamId(examId);
         examRepository.deleteById(examId);
         return new ApiResponse<>().success("Successfully deleted");
+    }
+
+    @Override
+    public ApiResponse<TeachersExamsResponse> getExamsByTeacherId(Long teacherId) {
+        List<Exam> exams = examRepository.findAllByTeacherId(teacherId);
+
+        if (exams == null || exams.isEmpty())
+            return new ApiResponse<TeachersExamsResponse>()
+                    .success("No data found", null);
+
+        TeachersExamsResponse teachersExamsResponse = new TeachersExamsResponse();
+
+        TeacherResponse teacherResponse = userFeign.getById(teacherId);
+        teachersExamsResponse.setTeacherResponse(teacherResponse);
+        teachersExamsResponse.setExamTeacherResponses(
+                exams.stream()
+                        .map(examMapper::toResponse)
+                        .toList()
+        );
+
+        return new ApiResponse<TeachersExamsResponse>()
+                .success("Successfully found", teachersExamsResponse);
+    }
+
+    @Override
+    public ApiResponse<List<ResultResponse>> getResultsByExamId(Long examId) {
+        List<Result> results = resultService.getResultsByExamId(examId);
+
+        if (results == null || results.isEmpty())
+            return new ApiResponse<List<ResultResponse>>()
+                    .success("No data found", null);
+
+        return new ApiResponse<List<ResultResponse>>()
+                .success(
+                        "Successfully found",
+                        results.stream()
+                                .map(resultMapper::toResponse)
+                                .toList()
+                );
     }
 
     static class TotalSums {

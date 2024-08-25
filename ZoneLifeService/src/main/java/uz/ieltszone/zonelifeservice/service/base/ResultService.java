@@ -13,4 +13,6 @@ public interface ResultService {
     void save(List<ResultRequest> resultRequests, Exam exam);
 
     void deleteByExamId(Long examId);
+
+    List<Result> getResultsByExamId(Long examId);
 }

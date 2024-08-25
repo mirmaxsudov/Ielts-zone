@@ -39,4 +39,9 @@ public class ResultServiceImpl implements ResultService {
     public void deleteByExamId(Long examId) {
         resultRepository.deleteByExamId(examId);
     }
+
+    @Override
+    public List<Result> getResultsByExamId(Long examId) {
+        return resultRepository.findByExamId(examId);
+    }
 }

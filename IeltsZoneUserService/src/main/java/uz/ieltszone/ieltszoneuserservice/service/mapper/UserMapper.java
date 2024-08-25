@@ -31,13 +31,14 @@ public class UserMapper {
 
     public UserResponse toResponse(User user) {
         return UserResponse.builder()
+                .id(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .birthDate(user.getBirthDate())
                 .joinedAt(user.getJoinedAt())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .attachment(
+                .attachmentResponse(
                         user.getAttachmentId() == null ? null :
                                 AttachmentResponse.builder()
                                         .attachmentId(user.getAttachmentId())
