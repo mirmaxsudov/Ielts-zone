@@ -2,7 +2,7 @@ package uz.ieltszone.zonelifeservice.service.mapper;
 
 import org.springframework.stereotype.Component;
 import uz.ieltszone.zonelifeservice.entity.Result;
-import uz.ieltszone.zonelifeservice.entity.response.ResultResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.ResultResponse;
 
 @Component
 public class ResultMapper {

@@ -2,8 +2,8 @@ package uz.ieltszone.zonelifeservice.service.base;
 
 import uz.ieltszone.zonelifeservice.entity.Exam;
 import uz.ieltszone.zonelifeservice.entity.Result;
-import uz.ieltszone.zonelifeservice.entity.request.ResultRequest;
-import uz.ieltszone.zonelifeservice.entity.response.ResultResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.request.ResultRequest;
+import uz.ieltszone.zonelifeservice.entity.dto.response.ResultResponse;
 
 import java.util.List;
 

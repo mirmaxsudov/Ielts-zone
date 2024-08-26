@@ -1,4 +1,4 @@
-package uz.ieltszone.zonelifeservice.entity.response;
+package uz.ieltszone.zonelifeservice.entity.dto.request;
 
 import lombok.*;
 
@@ -7,11 +7,10 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResultResponse {
-    private Long id;
+public class ResultRequest {
+    private Float total;
     private Float writing;
     private Float reading;
     private Float listening;
     private Float speaking;
-    private Float total;
 }

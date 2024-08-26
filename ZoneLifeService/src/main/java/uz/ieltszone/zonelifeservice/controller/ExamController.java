@@ -3,10 +3,9 @@ package uz.ieltszone.zonelifeservice.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import uz.ieltszone.zonelifeservice.aop.annotations.ExistsUserById;
-import uz.ieltszone.zonelifeservice.entity.request.ExamRequest;
-import uz.ieltszone.zonelifeservice.entity.response.ResultResponse;
-import uz.ieltszone.zonelifeservice.entity.response.teacher_exam.ExamTeacherResponse;
-import uz.ieltszone.zonelifeservice.entity.response.teacher_exam.TeachersExamsResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.request.ExamRequest;
+import uz.ieltszone.zonelifeservice.entity.dto.response.ResultResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.teacher_exam.TeachersExamsResponse;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.service.base.ExamService;
 

@@ -3,9 +3,9 @@ package uz.ieltszone.zonelifeservice.service.mapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uz.ieltszone.zonelifeservice.entity.Reward;
-import uz.ieltszone.zonelifeservice.entity.response.AttachmentResponse;
-import uz.ieltszone.zonelifeservice.entity.response.RewardResponse;
-import uz.ieltszone.zonelifeservice.entity.response.RewardResponseWithSize;
+import uz.ieltszone.zonelifeservice.entity.dto.response.AttachmentResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.RewardResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.RewardResponseWithSize;
 
 import java.util.List;
 

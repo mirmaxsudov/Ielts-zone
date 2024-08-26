@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 @Getter
@@ -18,6 +19,7 @@ public class Rate {
     private Long id;
     private Long teacherId;
     private LocalDate date;
+    private Month month;
     private Float avg;
     @OneToMany(mappedBy = "rate", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Exam> exams;

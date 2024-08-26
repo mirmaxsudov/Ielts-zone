@@ -4,7 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import uz.ieltszone.zonelifeservice.entity.response.ExamResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.ExamResponse;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package uz.ieltszone.zonelifeservice.entity.request;
+package uz.ieltszone.zonelifeservice.entity.dto.response;
 
 import lombok.*;
 
@@ -9,7 +9,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExamRequestInner {
+public class ExamResponse {
     private Long excelFileId;
-    private List<ResultRequest> resultResponses;
+    private List<ResultResponse> resultResponses;
 }

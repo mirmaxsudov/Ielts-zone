@@ -3,17 +3,20 @@ package uz.ieltszone.zonelifeservice.service.impl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import uz.ieltszone.zonelifeservice.entity.Reward;
-import uz.ieltszone.zonelifeservice.entity.request.RewardRequest;
-import uz.ieltszone.zonelifeservice.entity.request.RewardRequestUpdate;
-import uz.ieltszone.zonelifeservice.entity.response.RewardResponse;
-import uz.ieltszone.zonelifeservice.entity.response.RewardResponseWithSize;
+import uz.ieltszone.zonelifeservice.entity.RewardTeachers;
+import uz.ieltszone.zonelifeservice.entity.dto.request.RewardRequest;
+import uz.ieltszone.zonelifeservice.entity.dto.request.RewardRequestUpdate;
+import uz.ieltszone.zonelifeservice.entity.dto.response.RewardResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.RewardResponseWithSize;
 import uz.ieltszone.zonelifeservice.exceptions.CustomNotFoundException;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.repository.RewardRepository;
 import uz.ieltszone.zonelifeservice.repository.RewardTeachersRepository;
 import uz.ieltszone.zonelifeservice.service.base.RewardService;
+import uz.ieltszone.zonelifeservice.service.base.TeacherService;
 import uz.ieltszone.zonelifeservice.service.feign.FileFeign;
 import uz.ieltszone.zonelifeservice.service.mapper.RewardMapper;
 
@@ -59,21 +62,22 @@ public class RewardServiceImpl implements RewardService {
                 );
     }
 
-    private Reward getByIdFotBackend(Long id) {
-        return rewardRepository.findById(id)
-                .orElseThrow(
-                        () -> new CustomNotFoundException("Reward not found!")
-                );
-    }
-
     @Override
     public ApiResponse<RewardResponse> getById(Long rewardId) {
-        Reward reward = getByIdFotBackend(rewardId);
+        Reward reward = getByIdForBackend(rewardId);
 
         return new ApiResponse<RewardResponse>()
                 .success(
                         "Successfully fetched",
                         rewardMapper.toResponse(reward)
+                );
+    }
+
+    @Override
+    public Reward getByIdForBackend(Long rewardId) {
+        return rewardRepository.findById(rewardId)
+                .orElseThrow(
+                        () -> new CustomNotFoundException("Reward not found!")
                 );
     }
 
@@ -98,7 +102,7 @@ public class RewardServiceImpl implements RewardService {
 
     @Override
     public ApiResponse<?> update(Long rewardId, RewardRequestUpdate updateRequest) {
-        Reward reward = getByIdFotBackend(rewardId);
+        Reward reward = getByIdForBackend(rewardId);
 
         if (fileFeign.existsAttachment(updateRequest.getImageId()).getData())
             throw new CustomNotFoundException("File not found");
@@ -110,5 +114,29 @@ public class RewardServiceImpl implements RewardService {
 
         return new ApiResponse<>()
                 .success("Successfully updated");
+    }
+
+    private boolean existsReward(Long rewardId) {
+        return rewardRepository.existsById(rewardId);
+    }
+
+    @Override
+    @Modifying
+    public ResponseEntity<ApiResponse<?>> setReward(Long teacherId, Long rewardId) {
+        if (!existsReward(rewardId))
+            throw new CustomNotFoundException("Reward not found");
+
+        RewardTeachers rewardTeachers = new RewardTeachers();
+        rewardTeachers.setRewardId(rewardId);
+        rewardTeachers.setTeacherId(teacherId);
+
+        rewardTeachersRepository.save(rewardTeachers);
+        return ResponseEntity.ok(new ApiResponse<>().success("Successfully set reward"));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<?>> deleteRewardFromTeacher(Long teacherId, Long rewardId) {
+        rewardTeachersRepository.deleteByTeacherId(teacherId, rewardId);
+        return ResponseEntity.ok(new ApiResponse<>().success("Successfully deleted reward from teacher"));
     }
 }

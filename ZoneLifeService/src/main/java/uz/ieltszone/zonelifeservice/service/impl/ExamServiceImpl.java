@@ -5,16 +5,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import uz.ieltszone.zonelifeservice.entity.Exam;
+import uz.ieltszone.zonelifeservice.entity.Rate;
 import uz.ieltszone.zonelifeservice.entity.Result;
-import uz.ieltszone.zonelifeservice.entity.request.ExamRequest;
-import uz.ieltszone.zonelifeservice.entity.request.ExamRequestInner;
-import uz.ieltszone.zonelifeservice.entity.request.ResultRequest;
-import uz.ieltszone.zonelifeservice.entity.response.ResultResponse;
-import uz.ieltszone.zonelifeservice.entity.response.TeacherResponse;
-import uz.ieltszone.zonelifeservice.entity.response.teacher_exam.TeachersExamsResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.request.ExamRequest;
+import uz.ieltszone.zonelifeservice.entity.dto.request.ExamRequestInner;
+import uz.ieltszone.zonelifeservice.entity.dto.request.RateRequest;
+import uz.ieltszone.zonelifeservice.entity.dto.request.ResultRequest;
+import uz.ieltszone.zonelifeservice.entity.dto.response.ResultResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.TeacherResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.teacher_exam.TeachersExamsResponse;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.repository.ExamRepository;
 import uz.ieltszone.zonelifeservice.service.base.ExamService;
+import uz.ieltszone.zonelifeservice.service.base.RateService;
 import uz.ieltszone.zonelifeservice.service.base.ResultService;
 import uz.ieltszone.zonelifeservice.service.feign.FileFeign;
 import uz.ieltszone.zonelifeservice.service.feign.UserFeign;
@@ -22,6 +25,7 @@ import uz.ieltszone.zonelifeservice.service.mapper.ExamMapper;
 import uz.ieltszone.zonelifeservice.service.mapper.ResultMapper;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -34,32 +38,33 @@ public class ExamServiceImpl implements ExamService {
     private final UserFeign userFeign;
     private final ExamMapper examMapper;
     private final ResultMapper resultMapper;
+    private final RateService rateService;
 
     @Override
     @Modifying
     @Transactional
     public ApiResponse<?> save(Long teacherId, ExamRequest examRequest) {
+//        initialize exam
         Exam exam = new Exam();
-
-        exam.setTeacherId(teacherId);
-        exam.setAddedAt(LocalDate.now());
+        exam.setExamDate(examRequest.getExamDate());
         exam.setExamType(examRequest.getExamType());
         exam.setExamLevel(examRequest.getExamLevel());
-        exam.setExamDate(examRequest.getExamDate());
+        exam.setAddedAt(LocalDate.now());
 
         ExamRequestInner examRequestInner = examRequest.getExamRequestInner();
+        Long excelFileId = examRequestInner.getExcelFileId();
+        List<ResultRequest> resultRequests = examRequestInner.getResultResponses();
 
-        exam.setExcelFileId(examRequestInner.getExcelFileId());
+        exam.setExcelFileId(excelFileId);
 
+//        save exam
         examRepository.save(exam);
 
-        List<ResultRequest> resultResponses = examRequestInner.getResultResponses();
+//        save result
+        resultService.save(resultRequests, exam);
 
-        CompletableFuture.runAsync(
-                () -> resultService.save(resultResponses, exam)
-        );
-
-        TotalSums totals = resultResponses.stream()
+//        save exam again with avg values
+        TotalSums totals = resultRequests.stream()
                 .reduce(new TotalSums(), (acc, resultResponse) -> {
                     acc.listeningTotal += resultResponse.getListening() != null ? resultResponse.getListening() : 0.0f;
                     acc.readingTotal += resultResponse.getReading() != null ? resultResponse.getReading() : 0.0f;
@@ -74,14 +79,38 @@ public class ExamServiceImpl implements ExamService {
                     return a;
                 });
 
-        exam.setListening(totals.listeningTotal);
-        exam.setReading(totals.readingTotal);
-        exam.setSpeaking(totals.speakingTotal);
-        exam.setWriting(totals.writingTotal);
+        exam.setReading(totals.readingTotal / resultRequests.size());
+        exam.setSpeaking(totals.speakingTotal / resultRequests.size());
+        exam.setWriting(totals.writingTotal / resultRequests.size());
+        exam.setListening(totals.listeningTotal / resultRequests.size());
 
+        exam.setTotal(
+                (exam.getListening() + exam.getReading() + exam.getSpeaking() + exam.getWriting()) / 4
+        );
+
+//      get monthly rate for exam based month
+
+        Rate rate = rateService.getByTeacherIdAndMonth(teacherId, getMonth(exam.getExamDate()));
+
+//      if there is no monthly rating for current month, save it
+        if (rate == null) {
+            RateRequest rateRequest = new RateRequest();
+            rateRequest.setTeacherId(teacherId);
+            rateRequest.setAvg(exam.getTotal());
+            rateRequest.setDate(LocalDate.now());
+            rateRequest.setMonth(getMonth(exam.getExamDate()));
+
+            rateService.save(rateRequest);
+        }
+
+        exam.setRate(rate);
         examRepository.save(exam);
 
         return new ApiResponse<>().success("Successfully saved");
+    }
+
+    private Month getMonth(LocalDate date) {
+        return Month.of(date.getMonthValue());
     }
 
     @Override

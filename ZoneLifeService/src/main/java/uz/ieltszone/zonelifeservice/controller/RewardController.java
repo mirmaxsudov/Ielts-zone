@@ -2,12 +2,12 @@ package uz.ieltszone.zonelifeservice.controller;
 
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import uz.ieltszone.zonelifeservice.entity.Reward;
-import uz.ieltszone.zonelifeservice.entity.request.RewardRequest;
-import uz.ieltszone.zonelifeservice.entity.request.RewardRequestUpdate;
-import uz.ieltszone.zonelifeservice.entity.response.RewardResponse;
-import uz.ieltszone.zonelifeservice.entity.response.RewardResponseWithSize;
+import uz.ieltszone.zonelifeservice.entity.dto.request.RewardRequest;
+import uz.ieltszone.zonelifeservice.entity.dto.request.RewardRequestUpdate;
+import uz.ieltszone.zonelifeservice.entity.dto.response.RewardResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.RewardResponseWithSize;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.service.base.RewardService;
 
@@ -46,5 +46,15 @@ public class RewardController {
     @PutMapping("/update/{rewardId}")
     public ApiResponse<?> update(@PathVariable("rewardId") Long rewardId, @RequestBody RewardRequestUpdate updateRequest) {
         return rewardService.update(rewardId, updateRequest);
+    }
+
+    @GetMapping("/set-reward/{teacherId}")
+    public ResponseEntity<ApiResponse<?>> setReward(@PathVariable("teacherId") Long teacherId, @RequestParam("rewardId") Long rewardId) {
+        return rewardService.setReward(teacherId, rewardId);
+    }
+
+    @DeleteMapping("/delete-reward-from-teacher/{teacherId}")
+    public ResponseEntity<ApiResponse<?>> deleteReward(@PathVariable("teacherId") Long teacherId, @RequestParam("rewardId") Long rewardId) {
+        return rewardService.deleteRewardFromTeacher(teacherId, rewardId);
     }
 }

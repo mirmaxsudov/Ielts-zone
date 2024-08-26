@@ -1,4 +1,4 @@
-package uz.ieltszone.zonelifeservice.entity.response;
+package uz.ieltszone.zonelifeservice.entity.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

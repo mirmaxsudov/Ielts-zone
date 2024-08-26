@@ -1,8 +1,8 @@
 package uz.ieltszone.zonelifeservice.service.base;
 
-import uz.ieltszone.zonelifeservice.entity.request.ExamRequest;
-import uz.ieltszone.zonelifeservice.entity.response.ResultResponse;
-import uz.ieltszone.zonelifeservice.entity.response.teacher_exam.TeachersExamsResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.request.ExamRequest;
+import uz.ieltszone.zonelifeservice.entity.dto.response.ResultResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.teacher_exam.TeachersExamsResponse;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 
 import java.util.List;

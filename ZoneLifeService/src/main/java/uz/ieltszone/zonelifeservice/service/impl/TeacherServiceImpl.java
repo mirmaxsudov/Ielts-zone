@@ -1,10 +1,12 @@
 package uz.ieltszone.zonelifeservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import uz.ieltszone.zonelifeservice.entity.response.TeacherResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.TeacherResponse;
 import uz.ieltszone.zonelifeservice.exceptions.CustomNotFoundException;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
+import uz.ieltszone.zonelifeservice.service.base.RewardService;
 import uz.ieltszone.zonelifeservice.service.base.TeacherService;
 import uz.ieltszone.zonelifeservice.service.feign.UserFeign;
 
@@ -12,6 +14,7 @@ import uz.ieltszone.zonelifeservice.service.feign.UserFeign;
 @RequiredArgsConstructor
 public class TeacherServiceImpl implements TeacherService {
     private final UserFeign userFeign;
+    private final RewardService rewardService;
 
     @Override
     public ApiResponse<TeacherResponse> getById(Long teacherId) {

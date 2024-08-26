@@ -2,10 +2,9 @@ package uz.ieltszone.zonelifeservice.service.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.yaml.snakeyaml.util.EnumUtils;
 import uz.ieltszone.zonelifeservice.entity.Exam;
 import uz.ieltszone.zonelifeservice.entity.Result;
-import uz.ieltszone.zonelifeservice.entity.response.teacher_exam.ExamTeacherResponse;
+import uz.ieltszone.zonelifeservice.entity.dto.response.teacher_exam.ExamTeacherResponse;
 
 import java.util.List;
 

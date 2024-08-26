@@ -1,4 +1,4 @@
-package uz.ieltszone.zonelifeservice.entity.request;
+package uz.ieltszone.zonelifeservice.entity.dto.request;
 
 import lombok.Getter;
 import uz.ieltszone.zonelifeservice.entity.enums.ExamLevel;
