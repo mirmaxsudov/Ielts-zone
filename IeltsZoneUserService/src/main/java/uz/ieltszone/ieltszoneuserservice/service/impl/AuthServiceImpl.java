@@ -23,6 +23,7 @@ import uz.ieltszone.ieltszoneuserservice.service.base.AuthService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -89,13 +90,18 @@ public class AuthServiceImpl implements AuthService {
         List<UserRole> roles = request.getRoles();
         String token = request.getToken();
 
-        if (token == null || !token.startsWith("Bearer "))
+        System.out.println("token = " + token);
+
+        if (token == null)
             return false;
 
-        token = token.substring(7);
-        String username = jwtService.extractUsername(token);
+        String email = jwtService.extractUsername(token);
 
-        User user = (User) userDetailsService.loadUserByUsername(username);
+        System.out.println("email = " + email);
+
+        User user = (User) userDetailsService.loadUserByUsername(email);
+
+        System.out.println("us = " + user);
 
         return roles.stream()
                 .anyMatch(role -> role.equals(user.getRole()));

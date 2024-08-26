@@ -17,10 +17,15 @@ import java.util.List;
 @RequestMapping("/api/v1/attachment")
 public class AttachmentController {
     private final AttachmentService attachmentService;
+    private final RoleCheckService roleCheckService;
 
-    @CheckRole(roles = {"ADMIN", "TEACHER"})
+    //    @CheckRole(roles = {"ADMIN", "TEACHER"})
     @GetMapping("/get/{attachmentId}")
     public ResponseEntity<FileUrlResource> getPhoto(@PathVariable("attachmentId") Long attachmentId) {
+        roleCheckService.checkRoles(new String[]{"ADMIN", "TEACHER"});
+        System.out.println("attachmentId = " + attachmentId);
+
+
         return attachmentService.getPhoto(attachmentId);
     }
 

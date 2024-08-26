@@ -1,46 +1,37 @@
-package uz.ieltszone.ieltszonefileservice.aop;
+package uz.ieltszone.ieltszonefileservice.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
 import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.stereotype.Service;
 import uz.ieltszone.ieltszonefileservice.entity.request.RoleCheckRequest;
 import uz.ieltszone.ieltszonefileservice.exceptions.InvalidTokenException;
 import uz.ieltszone.ieltszonefileservice.service.feign.UserFeign;
 
 import java.util.List;
-import java.util.Objects;
 
-@Aspect
+@Service
 @RequiredArgsConstructor
-public class RoleCheckAspect {
+public class RoleCheckService {
     private final UserFeign userFeign;
+    private final HttpServletRequest request;
 
-    @Before("@annotation(checkRole)")
-    public void checkRole(CheckRole checkRole) {
-        System.out.println("checkRole");
-
-        HttpServletRequest request = ((ServletRequestAttributes)
-                Objects.requireNonNull(RequestContextHolder.getRequestAttributes()))
-                .getRequest();
-
+    public void checkRoles(String[] requiredRoles) {
         String token = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if (token == null || !token.startsWith("Bearer "))
+        if (token == null || !token.startsWith("Bearer ")) {
             throw new InvalidTokenException("Token not found");
+        }
 
         token = token.substring(7);
-        String[] requiredRoles = checkRole.roles();
 
         RoleCheckRequest roleCheckRequest = new RoleCheckRequest();
         roleCheckRequest.setToken(token);
         roleCheckRequest.setRoles(List.of(requiredRoles));
 
         Boolean checked = userFeign.checkRoles(roleCheckRequest);
+
+        System.out.println("checked = " + checked);
 
         if (!checked)
             throw new InvalidTokenException("Invalid token");
