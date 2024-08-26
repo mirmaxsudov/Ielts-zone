@@ -6,7 +6,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import uz.ieltszone.ieltszoneuserservice.model.entity.User;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.LoginRequest;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.UserRequest;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.UserRequestUpdate;
@@ -32,34 +34,34 @@ public class UserController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'MANEGER')")
-    @PutMapping("/update/{userId}")
-    public ApiResponse<UserResponse> update(@RequestBody UserRequestUpdate userRequest, @PathVariable("userId") Long userId) {
-        return userService.update(userRequest, userId);
+    @PutMapping("/update")
+    public ApiResponse<UserResponse> update(@RequestBody UserRequestUpdate userRequest, @AuthenticationPrincipal User user) {
+        return userService.update(userRequest, user.getId());
     }
 
-    @GetMapping("/exists/{userId}")
+    @GetMapping("/exists")
     @PreAuthorize("hasRole('ADMIN')")
-    public boolean existsById(@PathVariable("userId") Long userId) {
+    public boolean existsById(@AuthenticationPrincipal User user) {
         System.out.println("exists");
-        return userService.existsById(userId);
+        return userService.existsById(user.getId());
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/get-by-id")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'MANEGER')")
-    public UserResponse getById(@PathVariable("userId") Long userId) {
-        return userService.getById(userId);
+    public UserResponse getById(@AuthenticationPrincipal User user) {
+        return userService.getById(user.getId());
     }
 
-    @GetMapping("/email/{email}")
+    @GetMapping("/email")
     @PreAuthorize("hasRole('ADMIN')")
-    public UserResponse getByEmail(@PathVariable("email") String email) {
-        return userService.getByEmail(email);
+    public UserResponse getByEmail(@AuthenticationPrincipal User user) {
+        return userService.getByEmail(user.getEmail());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/phoneNumber/{phoneNumber}")
-    public UserResponse getByPhoneNumber(@PathVariable("phoneNumber") String phoneNumber) {
-        return userService.getByPhoneNumber(phoneNumber);
+    @GetMapping("/phoneNumber")
+    public UserResponse getByPhoneNumber(@AuthenticationPrincipal User user) {
+        return userService.getByPhoneNumber(user.getPhoneNumber());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -76,7 +78,7 @@ public class UserController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MANEGER', 'TEACHER')")
     @PatchMapping("/update-img/{userId}")
-    public ApiResponse<UserResponse> updateAttachment(@PathVariable("userId") Long userId, @RequestParam("attachmentId") Long attachmentId) {
-        return userService.updateAttachment(userId, attachmentId);
+    public ApiResponse<UserResponse> updateAttachment(@AuthenticationPrincipal User user, @RequestParam("attachmentId") Long attachmentId) {
+        return userService.updateAttachment(user.getId(), attachmentId);
     }
 }
