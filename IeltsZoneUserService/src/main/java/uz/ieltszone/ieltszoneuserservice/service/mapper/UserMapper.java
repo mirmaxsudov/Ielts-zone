@@ -1,6 +1,7 @@
 package uz.ieltszone.ieltszoneuserservice.service.mapper;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import uz.ieltszone.ieltszoneuserservice.feign.AttachmentFeign;
 import uz.ieltszone.ieltszoneuserservice.model.entity.User;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class UserMapper {
     private final AttachmentFeign attachmentFeign;
+    private final PasswordEncoder passwordEncoder;
 
     public User toEntity(UserRequest userRequest) {
         return User.builder()
@@ -21,7 +23,7 @@ public class UserMapper {
                 .role(userRequest.getRole())
                 .email(userRequest.getEmail())
                 .gender(userRequest.getGender())
-                .password(userRequest.getPassword())
+                .password(passwordEncoder.encode(userRequest.getPassword()))
                 .lastName(userRequest.getLastName())
                 .birthDate(userRequest.getBirthDate())
                 .firstName(userRequest.getFirstName())

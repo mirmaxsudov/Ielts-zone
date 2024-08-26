@@ -1,12 +1,18 @@
 package uz.ieltszone.ieltszoneuserservice.controller;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import uz.ieltszone.ieltszoneuserservice.model.entity.request.LoginRequest;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.UserRequest;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.UserRequestUpdate;
+import uz.ieltszone.ieltszoneuserservice.model.entity.response.JwtResponse;
 import uz.ieltszone.ieltszoneuserservice.model.entity.response.UserResponse;
 import uz.ieltszone.ieltszoneuserservice.payload.ApiResponse;
+import uz.ieltszone.ieltszoneuserservice.service.base.AuthService;
 import uz.ieltszone.ieltszoneuserservice.service.base.UserService;
 
 
@@ -15,10 +21,12 @@ import uz.ieltszone.ieltszoneuserservice.service.base.UserService;
 @RequestMapping("/api/v1/user")
 public class UserController {
     private final UserService userService;
+    private final AuthService authService;
+
 
     @PostMapping("/save")
-    public ApiResponse<UserResponse> save(@RequestBody @Valid UserRequest userRequest) {
-        return userService.save(userRequest);
+    public ResponseEntity<ApiResponse<UserResponse>> save(@RequestBody @Valid UserRequest userRequest) {
+        return ResponseEntity.ok(userService.save(userRequest));
     }
 
     @PutMapping("/update/{userId}")

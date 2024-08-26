@@ -5,6 +5,7 @@ import org.springframework.core.io.FileUrlResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import uz.ieltszone.ieltszonefileservice.aop.CheckRole;
 import uz.ieltszone.ieltszonefileservice.entity.response.ExamResponse;
 import uz.ieltszone.ieltszonefileservice.payload.ApiResponse;
 import uz.ieltszone.ieltszonefileservice.service.base.AttachmentService;
@@ -17,6 +18,7 @@ import java.util.List;
 public class AttachmentController {
     private final AttachmentService attachmentService;
 
+    @CheckRole(roles = {"ADMIN", "TEACHER"})
     @GetMapping("/get/{attachmentId}")
     public ResponseEntity<FileUrlResource> getPhoto(@PathVariable("attachmentId") Long attachmentId) {
         return attachmentService.getPhoto(attachmentId);

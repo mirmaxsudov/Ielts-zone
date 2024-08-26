@@ -18,6 +18,8 @@ public class Result {
     private Float readingBall;
     private Float speakingBall;
     private Float listeningBall;
+    private Boolean isPassed;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private Exam exam;
 }

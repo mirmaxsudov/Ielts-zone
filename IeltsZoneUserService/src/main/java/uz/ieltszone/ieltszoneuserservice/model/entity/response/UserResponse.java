@@ -1,11 +1,13 @@
 package uz.ieltszone.ieltszoneuserservice.model.entity.response;
 
 import lombok.Builder;
+import lombok.Getter;
 import lombok.Setter;
 import uz.ieltszone.ieltszoneuserservice.model.entity.enums.UserRole;
 
 import java.time.LocalDate;
 
+@Getter
 @Setter
 @Builder
 public class UserResponse {

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import uz.ieltszone.zonelifeservice.entity.Reward;
 import uz.ieltszone.zonelifeservice.entity.request.RewardRequest;
+import uz.ieltszone.zonelifeservice.entity.request.RewardRequestUpdate;
 import uz.ieltszone.zonelifeservice.entity.response.RewardResponse;
 import uz.ieltszone.zonelifeservice.entity.response.RewardResponseWithSize;
 import uz.ieltszone.zonelifeservice.exceptions.CustomNotFoundException;
@@ -93,5 +94,21 @@ public class RewardServiceImpl implements RewardService {
             throw new CustomNotFoundException("Rewards not found for this teacher");
 
         return rewardMapper.toResponseWithSize(rewards);
+    }
+
+    @Override
+    public ApiResponse<?> update(Long rewardId, RewardRequestUpdate updateRequest) {
+        Reward reward = getByIdFotBackend(rewardId);
+
+        if (fileFeign.existsAttachment(updateRequest.getImageId()).getData())
+            throw new CustomNotFoundException("File not found");
+
+        reward.setRewardName(updateRequest.getRewardName());
+        reward.setDescription(updateRequest.getDescription());
+        reward.setImageId(updateRequest.getImageId());
+        rewardRepository.save(reward);
+
+        return new ApiResponse<>()
+                .success("Successfully updated");
     }
 }
