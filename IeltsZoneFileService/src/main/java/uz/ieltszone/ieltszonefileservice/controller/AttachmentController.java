@@ -7,8 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import uz.ieltszone.ieltszonefileservice.aop.CheckRole;
-import uz.ieltszone.ieltszonefileservice.aop.CurrentUser;
-import uz.ieltszone.ieltszonefileservice.config.security.UserDetailsDTO;
 import uz.ieltszone.ieltszonefileservice.entity.response.ExamResponse;
 import uz.ieltszone.ieltszonefileservice.payload.ApiResponse;
 import uz.ieltszone.ieltszonefileservice.service.base.AttachmentService;
@@ -21,20 +19,12 @@ import java.util.List;
 @RequestMapping("/api/v1/attachment")
 public class AttachmentController {
     private final AttachmentService attachmentService;
-    private final RoleCheckService roleCheckService;
 
     @GetMapping("/get/{attachmentId}")
-    public ResponseEntity<?> getPhoto(@PathVariable("attachmentId") Long attachmentId, @CurrentUser UserDetailsDTO userDetailsDTO) {
+    public ResponseEntity<FileUrlResource> getPhoto(@PathVariable("attachmentId") Long attachmentId) {
         System.out.println("attachmentId = " + attachmentId);
-        System.out.println("userDetailsDTO = " + userDetailsDTO);
-        return ResponseEntity.ok(userDetailsDTO);
+        return attachmentService.getPhoto(attachmentId);
     }
-
-//    @GetMapping("/get/{attachmentId}")
-//    public ResponseEntity<FileUrlResource> getPhoto(@PathVariable("attachmentId") Long attachmentId) {
-//        System.out.println("attachmentId = " + attachmentId);
-//        return attachmentService.getPhoto(attachmentId);
-//    }
 
     @CheckRole(roles = {"TEACHER", "ADMIN"})
     @PostMapping(value = "/uploads", consumes = "multipart/form-data", produces = "application/json")

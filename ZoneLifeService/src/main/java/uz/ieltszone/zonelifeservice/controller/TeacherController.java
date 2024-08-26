@@ -13,7 +13,7 @@ import uz.ieltszone.zonelifeservice.service.base.TeacherService;
 public class TeacherController {
     private final TeacherService teacherService;
 
-    @GetMapping("/{teacherId}")
+    @GetMapping("/get-by-id/{teacherId}")
     public ApiResponse<TeacherResponse> getById(@PathVariable("teacherId") Long teacherId) {
         return teacherService.getById(teacherId);
     }
