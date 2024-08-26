@@ -23,4 +23,5 @@ public class Reward {
     private String description;
     private Long imageId;
     private LocalDate createdAt;
+    private Boolean isDeleted;
 }

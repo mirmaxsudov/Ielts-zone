@@ -1,4 +1,4 @@
-package uz.ieltszone.ieltszonefileservice.entity.request;
+package uz.ieltszone.zonelifeservice.entity.dto.request;
 
 import lombok.*;
 

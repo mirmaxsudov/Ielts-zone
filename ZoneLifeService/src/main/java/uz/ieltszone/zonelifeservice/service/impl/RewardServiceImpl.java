@@ -2,6 +2,9 @@ package uz.ieltszone.zonelifeservice.service.impl;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,7 @@ public class RewardServiceImpl implements RewardService {
         reward.setCreatedBy(rewardRequest.getCreatedById());
         reward.setImageId(rewardRequest.getImageId());
         reward.setCreatedAt(LocalDate.now());
+        reward.setIsDeleted(false);
 
         rewardRepository.save(reward);
 
@@ -53,7 +57,10 @@ public class RewardServiceImpl implements RewardService {
 
     @Override
     public ApiResponse<RewardResponseWithSize> getAll() {
-        List<Reward> rewards = rewardRepository.findAll();
+        List<Reward> rewards = rewardRepository.findAll()
+                .stream()
+                .filter(reward -> !reward.getIsDeleted())
+                .toList();
 
         return new ApiResponse<RewardResponseWithSize>()
                 .success(
@@ -138,5 +145,31 @@ public class RewardServiceImpl implements RewardService {
     public ResponseEntity<ApiResponse<?>> deleteRewardFromTeacher(Long teacherId, Long rewardId) {
         rewardTeachersRepository.deleteByTeacherId(teacherId, rewardId);
         return ResponseEntity.ok(new ApiResponse<>().success("Successfully deleted reward from teacher"));
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long rewardId) {
+        Reward reward = getByIdForBackend(rewardId);
+        reward.setIsDeleted(true);
+        rewardRepository.save(reward);
+    }
+
+    @Override
+    public ApiResponse<RewardResponseWithSize> getAllByPage(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Reward> pages = rewardRepository.findAll(pageable);
+
+        if (pages.isEmpty())
+            throw new CustomNotFoundException("Rewards not found");
+
+        return new ApiResponse<RewardResponseWithSize>()
+                .success(
+                        "Successfully fetched",
+                        rewardMapper.toResponseWithSize(
+                                pages.getContent()
+                        )
+                );
     }
 }

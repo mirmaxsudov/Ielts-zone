@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/ielts
+    url: jdbc:postgresql://localhost:5432/write_questions_bot
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
@@ -9,10 +9,10 @@ spring:
       ddl-auto: update
     show-sql: true
   application:
-    name: IeltsZoneFileService
+    name: WriteQuestionsBot
 
 server:
-  port: 8083
+  port: 8090
 
 logging:
   level:

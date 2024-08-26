@@ -4,6 +4,7 @@ import uz.ieltszone.zonelifeservice.entity.Exam;
 import uz.ieltszone.zonelifeservice.entity.Result;
 import uz.ieltszone.zonelifeservice.entity.dto.request.ResultRequest;
 import uz.ieltszone.zonelifeservice.entity.dto.response.ResultResponse;
+import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 
 import java.util.List;
 
@@ -15,4 +16,6 @@ public interface ResultService {
     void deleteByExamId(Long examId);
 
     List<Result> getResultsByExamId(Long examId);
+
+    ApiResponse<List<ResultResponse>> getAllByExamId(Long examId);
 }

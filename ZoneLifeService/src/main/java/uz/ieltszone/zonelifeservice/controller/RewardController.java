@@ -1,6 +1,5 @@
 package uz.ieltszone.zonelifeservice.controller;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,12 +10,18 @@ import uz.ieltszone.zonelifeservice.entity.dto.response.RewardResponseWithSize;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.service.base.RewardService;
 
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/zone-life/reward")
 public class RewardController {
     private final RewardService rewardService;
+
+    @GetMapping("/page")
+    public ResponseEntity<ApiResponse<RewardResponseWithSize>> getAllByPage(
+            @RequestParam("page") int page,
+            @RequestParam("size") int size) {
+        return ResponseEntity.ok(rewardService.getAllByPage(page, size));
+    }
 
     @GetMapping("/all")
     public ApiResponse<RewardResponseWithSize> getAll() {
@@ -39,8 +44,13 @@ public class RewardController {
     }
 
     @PostMapping("/save")
-    public ApiResponse<?> save(@RequestBody RewardRequest rewardRequest) {
-        return rewardService.save(rewardRequest);
+    public ResponseEntity<ApiResponse<?>> save(@RequestBody RewardRequest rewardRequest) {
+        return ResponseEntity.ok(rewardService.save(rewardRequest));
+    }
+
+    @PostMapping("/set-reward/{teacherId}")
+    public ResponseEntity<ApiResponse<?>> setReward(@PathVariable("teacherId") Long teacherId, @RequestParam("rewardId") Long rewardId) {
+        return rewardService.setReward(teacherId, rewardId);
     }
 
     @PutMapping("/update/{rewardId}")
@@ -48,13 +58,13 @@ public class RewardController {
         return rewardService.update(rewardId, updateRequest);
     }
 
-    @GetMapping("/set-reward/{teacherId}")
-    public ResponseEntity<ApiResponse<?>> setReward(@PathVariable("teacherId") Long teacherId, @RequestParam("rewardId") Long rewardId) {
-        return rewardService.setReward(teacherId, rewardId);
-    }
-
     @DeleteMapping("/delete-reward-from-teacher/{teacherId}")
     public ResponseEntity<ApiResponse<?>> deleteReward(@PathVariable("teacherId") Long teacherId, @RequestParam("rewardId") Long rewardId) {
         return rewardService.deleteRewardFromTeacher(teacherId, rewardId);
+    }
+
+    @DeleteMapping("/delete/{rewardId}")
+    public void delete(@PathVariable("rewardId") Long rewardId) {
+        rewardService.delete(rewardId);
     }
 }

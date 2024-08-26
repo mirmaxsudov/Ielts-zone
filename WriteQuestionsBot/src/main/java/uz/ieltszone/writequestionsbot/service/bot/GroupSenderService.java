@@ -151,16 +151,7 @@ public class GroupSenderService extends DefaultAbsSender {
     }
 
     private String generateFileCaption(ApplicationRequest request, User user) {
-        return String.format(
-                """
-                        #%s #%s
-
-                        Student name - %s
-                        """,
-                request.getLearningCenter().name(),
-                request.getTask().name(),
-                user.getFirstName()
-        );
+        return "New application";
     }
 
     private String generateFileName(User user) {

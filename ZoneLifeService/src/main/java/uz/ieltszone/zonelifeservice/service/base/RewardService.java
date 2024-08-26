@@ -26,4 +26,8 @@ public interface RewardService {
     ResponseEntity<ApiResponse<?>> setReward(Long teacherId, Long rewardId);
 
     ResponseEntity<ApiResponse<?>> deleteRewardFromTeacher(Long teacherId, Long rewardId);
+
+    void delete(Long rewardId);
+
+    ApiResponse<RewardResponseWithSize> getAllByPage(int page, int size);
 }

@@ -5,11 +5,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import uz.ieltszone.ieltszoneuserservice.model.entity.User;
 import uz.ieltszone.ieltszoneuserservice.model.entity.enums.UserRole;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.LoginRequest;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.RoleCheckRequest;
 import uz.ieltszone.ieltszoneuserservice.model.entity.response.JwtResponse;
+import uz.ieltszone.ieltszoneuserservice.model.entity.response.UserDetailsDTO;
 import uz.ieltszone.ieltszoneuserservice.service.base.AuthService;
 
 import java.util.List;
@@ -31,10 +34,16 @@ public class AuthController {
         return ResponseEntity.ok(authService.generateAccessToken(request));
     }
 
-    @GetMapping("/check-roles")
+    @PostMapping("/check-roles")
     public Boolean checkRoles(@RequestBody RoleCheckRequest request) {
         System.out.println("Inside check roles");
-
         return authService.checkRoles(request);
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'MANEGER')")
+    public UserDetailsDTO me(@AuthenticationPrincipal User user) {
+        System.out.println("user = " + user);
+        return authService.me(user);
     }
 }

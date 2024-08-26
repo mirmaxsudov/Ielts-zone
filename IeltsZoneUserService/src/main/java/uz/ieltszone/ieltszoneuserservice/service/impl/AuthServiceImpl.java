@@ -17,13 +17,13 @@ import uz.ieltszone.ieltszoneuserservice.model.entity.request.LoginRequest;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.RoleCheckRequest;
 import uz.ieltszone.ieltszoneuserservice.model.entity.response.AttachmentResponse;
 import uz.ieltszone.ieltszoneuserservice.model.entity.response.JwtResponse;
+import uz.ieltszone.ieltszoneuserservice.model.entity.response.UserDetailsDTO;
 import uz.ieltszone.ieltszoneuserservice.model.entity.response.UserResponse;
 import uz.ieltszone.ieltszoneuserservice.repository.UserRepository;
 import uz.ieltszone.ieltszoneuserservice.service.base.AuthService;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -92,8 +92,10 @@ public class AuthServiceImpl implements AuthService {
 
         System.out.println("token = " + token);
 
-        if (token == null)
+        if (token == null || !token.startsWith("Bearer "))
             return false;
+
+        token = token.substring(7);
 
         String email = jwtService.extractUsername(token);
 
@@ -105,6 +107,16 @@ public class AuthServiceImpl implements AuthService {
 
         return roles.stream()
                 .anyMatch(role -> role.equals(user.getRole()));
+    }
+
+    @Override
+    public UserDetailsDTO me(User user) {
+        UserDetailsDTO userDetailsDTO = new UserDetailsDTO();
+        userDetailsDTO.setId(user.getId());
+        userDetailsDTO.setPhoneNumber(user.getPhoneNumber());
+        userDetailsDTO.setEmail(user.getEmail());
+
+        return userDetailsDTO;
     }
 
 

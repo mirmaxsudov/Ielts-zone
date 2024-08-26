@@ -1,4 +1,5 @@
-package uz.ieltszone.ieltszonefileservice.aop;
+package uz.ieltszone.zonelifeservice.aop;
+
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.Aspect;
@@ -7,9 +8,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import uz.ieltszone.ieltszonefileservice.entity.request.RoleCheckRequest;
-import uz.ieltszone.ieltszonefileservice.exceptions.InvalidTokenException;
-import uz.ieltszone.ieltszonefileservice.service.feign.UserFeign;
+import uz.ieltszone.zonelifeservice.entity.dto.request.RoleCheckRequest;
+import uz.ieltszone.zonelifeservice.exceptions.InvalidTokenException;
+import uz.ieltszone.zonelifeservice.service.feign.UserFeign;
 
 import java.util.List;
 import java.util.Objects;
