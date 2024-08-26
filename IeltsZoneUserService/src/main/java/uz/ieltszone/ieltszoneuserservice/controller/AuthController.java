@@ -2,6 +2,7 @@ package uz.ieltszone.ieltszoneuserservice.controller;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,7 +16,6 @@ import uz.ieltszone.ieltszoneuserservice.model.entity.response.JwtResponse;
 import uz.ieltszone.ieltszoneuserservice.model.entity.response.UserDetailsDTO;
 import uz.ieltszone.ieltszoneuserservice.service.base.AuthService;
 
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,13 +24,13 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/authenticate")
-    public ResponseEntity<JwtResponse> authenticate(@RequestBody LoginRequest request) {
-        JwtResponse authenticate = authService.authenticate(request);
+    public ResponseEntity<JwtResponse> authenticate(@RequestBody LoginRequest request, HttpServletResponse response) {
+        JwtResponse authenticate = authService.authenticate(request, response);
         return ResponseEntity.ok(authenticate);
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<JwtResponse> refreshToken(HttpServletRequest request) {
+    public ResponseEntity<JwtResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         return ResponseEntity.ok(authService.generateAccessToken(request));
     }
 

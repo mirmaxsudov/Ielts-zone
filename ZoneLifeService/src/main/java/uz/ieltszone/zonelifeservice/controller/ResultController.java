@@ -19,7 +19,7 @@ import java.util.List;
 public class ResultController {
     private final ResultService resultService;
 
-    @CheckRole(roles = "ADMIN")
+    @CheckRole(roles = "TEACHER")
     @GetMapping("/get-all-by-exam-id/{examId}")
     public ResponseEntity<ApiResponse<List<ResultResponse>>> getAllByExamId(@PathVariable("examId") Long examId) {
         return ResponseEntity.ok(resultService.getAllByExamId(examId));

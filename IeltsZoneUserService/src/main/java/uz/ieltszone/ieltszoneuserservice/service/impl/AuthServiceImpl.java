@@ -1,6 +1,8 @@
 package uz.ieltszone.ieltszoneuserservice.service.impl;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +26,7 @@ import uz.ieltszone.ieltszoneuserservice.service.base.AuthService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final CustomUserDetailsService userDetailsService;
 
     @Override
-    public JwtResponse authenticate(LoginRequest request) {
+    public JwtResponse authenticate(LoginRequest request, HttpServletResponse response) {
         authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getLogin(),
                         request.getPassword()));
@@ -52,8 +55,22 @@ public class AuthServiceImpl implements AuthService {
         accessToken = jwtService.generateAccessToken(user1);
         refreshToken = jwtService.generateRefreshToken(user1);
 
+        CompletableFuture.runAsync(
+                () -> setRefreshTokenCookie(refreshToken, response)
+        );
 
         return new JwtResponse(accessToken, refreshToken, getUserResponseDto(user1));
+    }
+
+    private void setRefreshTokenCookie(String refreshToken, HttpServletResponse response) {
+        Cookie cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60 * 24 * 30); // -> 30 days
+        cookie.setDomain("localhost");
+
+        response.addCookie(cookie);
     }
 
 
