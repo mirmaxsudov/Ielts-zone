@@ -44,8 +44,7 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
     @Value("${bot.group.id}")
     private static String GROUP_ID;
 
-    @Value("${bot.photo.save.url}")
-    private static String BASE_URL = "/home/ielts_zone/bot/write_questions_bot/files";
+    private static final String BASE_URL = "/home/ielts_zone/bot/write_questions_bot/files";
     private final AttachmentRepository attachmentRepository;
 
     @Autowired

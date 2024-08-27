@@ -38,7 +38,7 @@ public class GroupSenderService extends DefaultAbsSender {
     @Value("${bot.group.id}")
     private String GROUP_ID;
 
-    private final static String BASE_FILE_URL = "C:\\Abdurahmon\\Photo & Videos\\Bot";
+    private final static String BASE_FILE_URL = "/home/ielts_zone/bot/write_questions_bot/files";
 
     protected GroupSenderService(BotConfiguration botConfiguration, UserService userService, AttachmentRepository attachmentRepository) {
         super(new DefaultBotOptions());
@@ -79,7 +79,7 @@ public class GroupSenderService extends DefaultAbsSender {
     @SneakyThrows
     public void sendApplicationToGroupWithPhotos(ApplicationRequest request) {
         User user = userService.getByChatId(request.getStudentChatId());
-        String URL = BASE_FILE_URL + "\\" + System.currentTimeMillis() + "_" + UUID.randomUUID();
+        String URL = BASE_FILE_URL + "/" + System.currentTimeMillis() + "_" + UUID.randomUUID();
         Path target = Paths.get(URL);
 
         if (!Files.exists(target)) {
@@ -91,7 +91,6 @@ public class GroupSenderService extends DefaultAbsSender {
 
         Path targetPath = target.resolve(sourcePath.getFileName());
 
-        System.out.println("Moving text file from: " + sourcePath + " to " + targetPath);
         Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
         for (Long attachmentId : request.getAttachments()) {
@@ -101,7 +100,6 @@ public class GroupSenderService extends DefaultAbsSender {
             Path attachmentSourcePath = Paths.get(attachment.getFilePath());
             Path attachmentTargetPath = target.resolve(Paths.get(attachment.getFileName()));
 
-            System.out.println("Moving attachment from: " + attachmentSourcePath + " to " + attachmentTargetPath);
             Files.move(attachmentSourcePath, attachmentTargetPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
@@ -131,7 +129,6 @@ public class GroupSenderService extends DefaultAbsSender {
     @SneakyThrows
     public static void deleteDirectoryRecursively(Path directory) {
         if (Files.notExists(directory)) {
-            System.out.println("Directory does not exist: " + directory);
             return;
         }
 

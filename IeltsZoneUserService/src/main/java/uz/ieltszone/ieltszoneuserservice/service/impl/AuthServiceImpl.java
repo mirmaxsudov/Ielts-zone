@@ -76,6 +76,7 @@ public class AuthServiceImpl implements AuthService {
 
     public JwtResponse generateAccessToken(HttpServletRequest request) {
         String refreshToken = request.getHeader("Authorization");
+
         if (refreshToken == null || !refreshToken.startsWith("Bearer "))
             return null;
 
