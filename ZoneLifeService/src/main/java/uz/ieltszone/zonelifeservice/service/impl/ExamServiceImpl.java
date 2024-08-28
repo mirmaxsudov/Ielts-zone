@@ -2,6 +2,7 @@ package uz.ieltszone.zonelifeservice.service.impl;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import uz.ieltszone.zonelifeservice.entity.Exam;
@@ -14,6 +15,7 @@ import uz.ieltszone.zonelifeservice.entity.dto.request.ResultRequest;
 import uz.ieltszone.zonelifeservice.entity.dto.response.ResultResponse;
 import uz.ieltszone.zonelifeservice.entity.dto.response.TeacherResponse;
 import uz.ieltszone.zonelifeservice.entity.dto.response.teacher_exam.TeachersExamsResponse;
+import uz.ieltszone.zonelifeservice.entity.payload.TotalSums;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.repository.ExamRepository;
 import uz.ieltszone.zonelifeservice.service.base.ExamService;
@@ -46,10 +48,11 @@ public class ExamServiceImpl implements ExamService {
     public ApiResponse<?> save(Long teacherId, ExamRequest examRequest) {
 //        initialize exam
         Exam exam = new Exam();
+        exam.setAddedAt(LocalDate.now());
         exam.setExamDate(examRequest.getExamDate());
         exam.setExamType(examRequest.getExamType());
+        exam.setPassMark(examRequest.getPassMark());
         exam.setExamLevel(examRequest.getExamLevel());
-        exam.setAddedAt(LocalDate.now());
 
         ExamRequestInner examRequestInner = examRequest.getExamRequestInner();
         Long excelFileId = examRequestInner.getExcelFileId();
@@ -64,29 +67,36 @@ public class ExamServiceImpl implements ExamService {
         resultService.save(resultRequests, exam);
 
 //        save exam again with avg values
-        TotalSums totals = resultRequests.stream()
-                .reduce(new TotalSums(), (acc, resultResponse) -> {
-                    acc.listeningTotal += resultResponse.getListening() != null ? resultResponse.getListening() : 0.0f;
-                    acc.readingTotal += resultResponse.getReading() != null ? resultResponse.getReading() : 0.0f;
-                    acc.speakingTotal += resultResponse.getSpeaking() != null ? resultResponse.getSpeaking() : 0.0f;
-                    acc.writingTotal += resultResponse.getWriting() != null ? resultResponse.getWriting() : 0.0f;
-                    return acc;
-                }, (a, b) -> {
-                    a.listeningTotal += b.listeningTotal;
-                    a.readingTotal += b.readingTotal;
-                    a.speakingTotal += b.speakingTotal;
-                    a.writingTotal += b.writingTotal;
-                    return a;
-                });
 
-        exam.setReading(totals.readingTotal / resultRequests.size());
-        exam.setSpeaking(totals.speakingTotal / resultRequests.size());
-        exam.setWriting(totals.writingTotal / resultRequests.size());
-        exam.setListening(totals.listeningTotal / resultRequests.size());
+        TotalSums totalSums = new TotalSums();
+
+        float listeningTotal = 0f;
+        float readingTotal = 0f;
+        float speakingTotal = 0f;
+        float writingTotal = 0f;
+
+        for (ResultRequest resultRequest : resultRequests) {
+            listeningTotal += resultRequest.getListening();
+            readingTotal += resultRequest.getReading();
+            speakingTotal += resultRequest.getSpeaking();
+            writingTotal += resultRequest.getWriting();
+        }
+
+        totalSums.setListeningTotal(listeningTotal);
+        totalSums.setReadingTotal(readingTotal);
+        totalSums.setSpeakingTotal(speakingTotal);
+        totalSums.setWritingTotal(writingTotal);
+
+        exam.setReading(totalSums.getReadingTotal() / resultRequests.size());
+        exam.setSpeaking(totalSums.getSpeakingTotal() / resultRequests.size());
+        exam.setWriting(totalSums.getWritingTotal() / resultRequests.size());
+        exam.setListening(totalSums.getListeningTotal() / resultRequests.size());
 
         exam.setTotal(
                 (exam.getListening() + exam.getReading() + exam.getSpeaking() + exam.getWriting()) / 4
         );
+
+        examRepository.save(exam);
 
 //      get monthly rate for exam based month
 
@@ -101,6 +111,8 @@ public class ExamServiceImpl implements ExamService {
             rateRequest.setMonth(getMonth(exam.getExamDate()));
 
             rateService.save(rateRequest);
+
+            rate = rateService.getByTeacherIdAndMonth(teacherId, getMonth(exam.getExamDate()));
         }
 
         exam.setRate(rate);
@@ -158,12 +170,5 @@ public class ExamServiceImpl implements ExamService {
                                 .map(resultMapper::toResponse)
                                 .toList()
                 );
-    }
-
-    static class TotalSums {
-        private Float listeningTotal;
-        private Float readingTotal;
-        private Float speakingTotal;
-        private Float writingTotal;
     }
 }
