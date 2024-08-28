@@ -34,7 +34,7 @@ public class SecurityConfig {
     private final CustomAccessDeniedHandler accessDeniedHandler;
 
     private static final String[] WHITE_LIST_URL = {
-            "/api/v1/user/**",
+            "/api/v1/user/auth/**",
             "/v2/api-docs",
             "/v3/api-docs",
             "/v3/api-docs/**",

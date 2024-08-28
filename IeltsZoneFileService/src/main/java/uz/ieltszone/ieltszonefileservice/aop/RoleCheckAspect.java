@@ -1,4 +1,5 @@
 package uz.ieltszone.ieltszonefileservice.aop;
+
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.Aspect;
@@ -36,16 +37,16 @@ public class RoleCheckAspect {
             throw new InvalidTokenException("Token not found");
 
         RoleCheckRequest roleCheckRequest = new RoleCheckRequest();
-        roleCheckRequest.setToken(token);
+        roleCheckRequest.setToken(token.trim());
         roleCheckRequest.setRoles(List.of(checkRole.roles()));
 
         System.out.println("roleCheckRequest = " + roleCheckRequest);
 
-        Boolean checked = userFeign.checkRoles(roleCheckRequest);
+        Boolean checked = userFeign.checkRoles(roleCheckRequest).getBody();
 
         System.out.println("checked = " + checked);
 
-        if (!checked) {
+        if (Boolean.FALSE.equals(checked)) {
             throw new InvalidTokenException("User does not have the required role(s)");
         }
     }

@@ -1,10 +1,8 @@
 package uz.ieltszone.writequestionsbot.service.bot;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -13,7 +11,6 @@ import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
-import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeChat;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import uz.ieltszone.writequestionsbot.config.BotConfiguration;
@@ -93,10 +90,10 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
     private void processUpdate(Message message) {
         final Long chatId = message.getChatId();
 
-        if (chatId.toString().equals(GROUP_ID))
-            return;
+        log.info("Chat Id => {}: Text => {}", chatId, message.getText());
 
-        if (chatId.equals(-1L)) return;
+        if (chatId.toString().equals(GROUP_ID) || chatId < 0)
+            return;
 
         final String text = message.getText();
         final int messageId = message.getMessageId();

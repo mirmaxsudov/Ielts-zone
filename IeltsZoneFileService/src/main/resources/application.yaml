@@ -16,6 +16,11 @@ spring:
   jackson:
     serialization:
       fail-on-empty-beans: false
+  cloud:
+    loadbalancer:
+      ribbon:
+        eureka:
+          enabled: true
 eureka:
   client:
     service-url:

@@ -21,26 +21,27 @@ public class ExamController {
     private final ExamService examService;
 
     @PostMapping("/save")
-    @CheckRole(roles = "ADMIN")
+    @CheckRole(roles = {"TEACHER", "ADMIN"})
     public ApiResponse<?> save(@RequestBody ExamRequest examRequest, @CurrentUser UserDetailsDTO userDetailsDTO) {
+
+        System.out.println("examRequest = " + examRequest);
+        System.out.println("userDetailsDTO = " + userDetailsDTO);
+
         return examService.save(userDetailsDTO.getId(), examRequest);
     }
 
-    @CheckRole(roles = {"ADMIN", "TEACHER"})
     @GetMapping("/get-exams-by-teacher-id")
-    public ApiResponse<TeachersExamsResponse> getExamsByTeacherId(@CurrentUser UserDetailsDTO userDetailsDTO) {
+    public ApiResponse<TeachersExamsResponse> getExamsByTeacherId(UserDetailsDTO userDetailsDTO) {
         return examService.getExamsByTeacherId(userDetailsDTO.getId());
     }
 
-    @CheckRole(roles = {"ADMIN", "TEACHER"})
     @GetMapping("/get-results-by-exam-id/{examId}")
     public ApiResponse<List<ResultResponse>> getResultsByExamId(@PathVariable("examId") Long examId) {
         return examService.getResultsByExamId(examId);
     }
 
-    @CheckRole(roles = "ADMIN")
     @DeleteMapping("/delete")
-    public ApiResponse<?> delete(@RequestParam("examId") Long examId, @CurrentUser UserDetailsDTO userDetailsDTO) {
+    public ApiResponse<?> delete(@RequestParam("examId") Long examId, UserDetailsDTO userDetailsDTO) {
         return examService.delete(userDetailsDTO.getId(), examId);
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import uz.ieltszone.ieltszonefileservice.aop.CheckRole;
+import uz.ieltszone.ieltszonefileservice.aop.CurrentUser;
 import uz.ieltszone.ieltszonefileservice.entity.response.ExamResponse;
 import uz.ieltszone.ieltszonefileservice.payload.ApiResponse;
 import uz.ieltszone.ieltszonefileservice.service.base.AttachmentService;
@@ -33,15 +34,18 @@ public class AttachmentController {
     }
 
     @PostMapping("/upload")
-    @CheckRole(roles = {"TEACHER", "ADMIN"})
+    @CheckRole(roles = {"TEACHER"})
     public ResponseEntity<Long> uploadFile(@RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(attachmentService.uploadFile(file));
     }
 
     @CheckRole(roles = {"ADMIN"})
     @PostMapping("/save-excel-and-return-values")
-    public ApiResponse<ExamResponse> saveExcelAndReturnValues(@RequestParam("excel") MultipartFile file) {
-        return attachmentService.saveExcelAndReturnValues(file);
+    public ResponseEntity<ApiResponse<ExamResponse>> saveExcelAndReturnValues(@RequestParam("excel") MultipartFile file) {
+
+        System.out.println("file = " + 413413);
+
+        return ResponseEntity.ok(attachmentService.saveExcelAndReturnValues(file));
     }
 
     @CheckRole(roles = {"ADMIN", "TEACHER"})

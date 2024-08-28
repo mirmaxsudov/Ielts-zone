@@ -175,6 +175,9 @@ public class AttachmentServiceImpl implements AttachmentService {
         }
 
         examResponse.setResultResponses(responses);
+
+        System.out.println("responses = " + responses);
+
         return new ApiResponse<ExamResponse>()
                 .success("Success", examResponse);
     }
@@ -217,7 +220,12 @@ public class AttachmentServiceImpl implements AttachmentService {
         attachment.setFileType(file.getContentType());
         attachment.setExtension(getExtension(Objects.requireNonNull(file.getOriginalFilename())));
 
-        return attachmentRepository.save(attachment);
+        attachmentRepository.save(attachment);
+
+        String fileURL = BASE_URL + "\\" + attachment.getId() + "." + attachment.getExtension();
+        attachment.setFileUrl(fileURL);
+
+        return attachmentRepository.saveAndFlush(attachment);
     }
 
     private String getExtension(String fileName) {

@@ -110,16 +110,14 @@ public class AuthServiceImpl implements AuthService {
 
         System.out.println("token = " + token);
 
-        if (token == null || !token.startsWith("Bearer "))
+        if (token == null)
             return false;
-
-        token = token.substring(7);
 
         String email = jwtService.extractUsername(token);
 
         System.out.println("email = " + email);
 
-        User user = (User) userDetailsService.loadUserByUsername(email);
+        User user = userDetailsService.loadUserByUsername(email);
 
         System.out.println("us = " + user);
 

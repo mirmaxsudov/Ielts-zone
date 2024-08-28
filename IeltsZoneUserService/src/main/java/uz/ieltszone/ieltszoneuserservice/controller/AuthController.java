@@ -35,9 +35,10 @@ public class AuthController {
     }
 
     @PostMapping("/check-roles")
-    public Boolean checkRoles(@RequestBody RoleCheckRequest request) {
+    public ResponseEntity<Boolean> checkRoles(@RequestBody RoleCheckRequest request) {
         System.out.println("Inside check roles");
-        return authService.checkRoles(request);
+        System.out.println("request.getToken() = " + request.getToken());
+        return ResponseEntity.ok(authService.checkRoles(request));
     }
 
     @GetMapping("/me")
