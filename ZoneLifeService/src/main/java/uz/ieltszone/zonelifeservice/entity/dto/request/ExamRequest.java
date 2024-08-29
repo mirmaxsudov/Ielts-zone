@@ -14,5 +14,6 @@ public class ExamRequest {
     private ExamLevel examLevel;
     private LocalDate examDate;
     private Float passMark;
+    private Long teacherId;
     private ExamRequestInner examRequestInner;
 }

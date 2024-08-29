@@ -2,7 +2,6 @@ package uz.ieltszone.zonelifeservice.service.impl;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import uz.ieltszone.zonelifeservice.entity.Exam;
@@ -16,12 +15,12 @@ import uz.ieltszone.zonelifeservice.entity.dto.response.ResultResponse;
 import uz.ieltszone.zonelifeservice.entity.dto.response.TeacherResponse;
 import uz.ieltszone.zonelifeservice.entity.dto.response.teacher_exam.TeachersExamsResponse;
 import uz.ieltszone.zonelifeservice.entity.payload.TotalSums;
+import uz.ieltszone.zonelifeservice.exceptions.CustomNotFoundException;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import uz.ieltszone.zonelifeservice.repository.ExamRepository;
 import uz.ieltszone.zonelifeservice.service.base.ExamService;
 import uz.ieltszone.zonelifeservice.service.base.RateService;
 import uz.ieltszone.zonelifeservice.service.base.ResultService;
-import uz.ieltszone.zonelifeservice.service.feign.FileFeign;
 import uz.ieltszone.zonelifeservice.service.feign.UserFeign;
 import uz.ieltszone.zonelifeservice.service.mapper.ExamMapper;
 import uz.ieltszone.zonelifeservice.service.mapper.ResultMapper;
@@ -36,7 +35,6 @@ import java.util.concurrent.CompletableFuture;
 public class ExamServiceImpl implements ExamService {
     private final ExamRepository examRepository;
     private final ResultService resultService;
-    private final FileFeign fileFeign;
     private final UserFeign userFeign;
     private final ExamMapper examMapper;
     private final ResultMapper resultMapper;
@@ -45,7 +43,7 @@ public class ExamServiceImpl implements ExamService {
     @Override
     @Modifying
     @Transactional
-    public ApiResponse<?> save(Long teacherId, ExamRequest examRequest) {
+    public ApiResponse<?> save(Long adminId, ExamRequest examRequest) {
 //        initialize exam
         Exam exam = new Exam();
         exam.setAddedAt(LocalDate.now());
@@ -53,6 +51,8 @@ public class ExamServiceImpl implements ExamService {
         exam.setExamType(examRequest.getExamType());
         exam.setPassMark(examRequest.getPassMark());
         exam.setExamLevel(examRequest.getExamLevel());
+        exam.setTeacherId(adminId);
+        exam.setCreatedById(adminId);
 
         ExamRequestInner examRequestInner = examRequest.getExamRequestInner();
         Long excelFileId = examRequestInner.getExcelFileId();
@@ -100,6 +100,7 @@ public class ExamServiceImpl implements ExamService {
 
 //      get monthly rate for exam based month
 
+        Long teacherId = examRequest.getTeacherId();
         Rate rate = rateService.getByTeacherIdAndMonth(teacherId, getMonth(exam.getExamDate()));
 
 //      if there is no monthly rating for current month, save it
@@ -118,7 +119,24 @@ public class ExamServiceImpl implements ExamService {
         exam.setRate(rate);
         examRepository.save(exam);
 
+        Rate finalRate = rate;
+        CompletableFuture.runAsync(
+                () -> refreshRateByTeacherId(finalRate)
+        );
+
         return new ApiResponse<>().success("Successfully saved");
+    }
+
+    private void refreshRateByTeacherId(Rate rate) {
+        List<Exam> exams = rate.getExams();
+
+        float examsAvg = exams.stream()
+                .map(Exam::getTotal)
+                .reduce(0f, Float::sum) / exams.size();
+
+
+        rate.setAvg(examsAvg);
+        rateService.save(rate);
     }
 
     private Month getMonth(LocalDate date) {
@@ -128,9 +146,22 @@ public class ExamServiceImpl implements ExamService {
     @Override
     @Transactional
     public ApiResponse<?> delete(Long teacherId, Long examId) {
+        Exam exam = getExamById(examId);
+
         resultService.deleteByExamId(examId);
         examRepository.deleteById(examId);
+
+        Rate rate = rateService.getByTeacherIdAndMonth(teacherId, exam.getExamDate().getMonth());
+
+        refreshRateByTeacherId(rate);
+
         return new ApiResponse<>().success("Successfully deleted");
+    }
+
+    private Exam getExamById(Long examId) {
+        return examRepository.findById(examId).orElseThrow(
+                () -> new CustomNotFoundException("Exam not found with id: " + examId)
+        );
     }
 
     @Override

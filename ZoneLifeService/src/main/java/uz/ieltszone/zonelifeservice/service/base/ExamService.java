@@ -8,7 +8,7 @@ import uz.ieltszone.zonelifeservice.payload.ApiResponse;
 import java.util.List;
 
 public interface ExamService {
-    ApiResponse<?> save(Long teacherId, ExamRequest examRequest);
+    ApiResponse<?> save(Long adminId, ExamRequest examRequest);
 
     ApiResponse<?> delete(Long teacherId, Long examId);
 

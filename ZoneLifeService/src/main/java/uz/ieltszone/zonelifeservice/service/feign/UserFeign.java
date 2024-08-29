@@ -7,6 +7,8 @@ import uz.ieltszone.zonelifeservice.config.security.UserDetailsDTO;
 import uz.ieltszone.zonelifeservice.entity.dto.request.RoleCheckRequest;
 import uz.ieltszone.zonelifeservice.entity.dto.response.TeacherResponse;
 
+import java.util.List;
+
 @FeignClient(name = "IELTS-ZONE-USER-SERVICE", configuration = FeignConfig.class)
 public interface UserFeign {
     @GetMapping("/api/v1/user/exists/{userId}")
@@ -20,4 +22,7 @@ public interface UserFeign {
 
     @GetMapping("/api/v1/user/auth/me")
     UserDetailsDTO getUserDetails(@RequestHeader("Authorization") String token);
+
+    @GetMapping("/api/v1/user/all")
+    List<TeacherResponse> getAll();
 }

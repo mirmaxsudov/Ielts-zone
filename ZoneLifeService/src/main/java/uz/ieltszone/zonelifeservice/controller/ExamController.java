@@ -1,6 +1,7 @@
 package uz.ieltszone.zonelifeservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.ieltszone.zonelifeservice.aop.CheckRole;
 import uz.ieltszone.zonelifeservice.aop.CurrentUser;
@@ -23,7 +24,6 @@ public class ExamController {
     @PostMapping("/save")
     @CheckRole(roles = {"TEACHER", "ADMIN"})
     public ApiResponse<?> save(@RequestBody ExamRequest examRequest, @CurrentUser UserDetailsDTO userDetailsDTO) {
-
         System.out.println("examRequest = " + examRequest);
         System.out.println("userDetailsDTO = " + userDetailsDTO);
 
@@ -41,7 +41,7 @@ public class ExamController {
     }
 
     @DeleteMapping("/delete")
-    public ApiResponse<?> delete(@RequestParam("examId") Long examId, UserDetailsDTO userDetailsDTO) {
-        return examService.delete(userDetailsDTO.getId(), examId);
+    public ResponseEntity<ApiResponse<?>> delete(@RequestParam("examId") Long examId, @CurrentUser UserDetailsDTO userDetailsDTO) {
+        return ResponseEntity.ok(examService.delete(userDetailsDTO.getId(), examId));
     }
 }

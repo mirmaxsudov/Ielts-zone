@@ -9,4 +9,6 @@ public interface RateService {
     Rate getByTeacherIdAndMonth(Long teacherId, Month month);
 
     void save(RateRequest rateRequest);
+
+    void save(Rate rate);
 }

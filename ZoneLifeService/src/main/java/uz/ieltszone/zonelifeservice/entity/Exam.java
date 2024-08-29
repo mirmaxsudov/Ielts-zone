@@ -28,6 +28,7 @@ public class Exam {
     private LocalDate addedAt;
     private Long teacherId;
     private Long excelFileId;
+    private Long createdById;
     private Float passMark;
 
     @Enumerated(EnumType.STRING)

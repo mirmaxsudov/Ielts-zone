@@ -30,4 +30,10 @@ public class RateServiceImpl implements RateService {
         rate.setDate(rateRequest.getDate());
         rateRepository.save(rate);
     }
+
+    @Override
+    @Modifying
+    public void save(Rate rate) {
+        rateRepository.save(rate);
+    }
 }
