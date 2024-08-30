@@ -1,5 +1,6 @@
 package uz.ieltszone.writequestionsbot.service.bot;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,20 +37,22 @@ import java.util.*;
 public class TelegramBotService extends TelegramLongPollingBot implements ReplyMarkup {
     private final BotConfiguration botConfiguration;
     private final GroupSenderService groupSenderService;
+    private final BotNotificationService botNotificationService;
     private final UserService userService;
 
     @Value("${bot.group.id}")
     private static String GROUP_ID;
 
-    private static final String BASE_URL = "/home/ielts_zone/bot/write_questions_bot/files";
+    private static final String BASE_URL = "/home/ielts_zone/bot/write_questions_bot";
     private final AttachmentRepository attachmentRepository;
 
     @Autowired
-    public TelegramBotService(BotConfiguration botConfiguration, GroupSenderService groupSenderService, UserService userService, AttachmentRepository attachmentRepository) {
+    public TelegramBotService(BotConfiguration botConfiguration, GroupSenderService groupSenderService, BotNotificationService botNotificationService, UserService userService, AttachmentRepository attachmentRepository) {
         this.botConfiguration = botConfiguration;
         this.groupSenderService = groupSenderService;
-        this.userService = userService;
+        this.botNotificationService = botNotificationService;
         this.attachmentRepository = attachmentRepository;
+        this.userService = userService;
 
         List<BotCommand> commands = List.of(
                 new BotCommand("/start", "Start the bot🔰"),
@@ -90,8 +93,6 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
     private void processUpdate(Message message) {
         final Long chatId = message.getChatId();
 
-        log.info("Chat Id => {}: Text => {}", chatId, message.getText());
-
         if (chatId.toString().equals(GROUP_ID) || chatId < 0)
             return;
 
@@ -131,19 +132,10 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
             info.setText("This bot helps to collect student's IELTS writing exam question. If you take a exam recently, please use /start command to help other candidates.👨‍🏫");
 
             customSender(info);
-
             return;
         }
 
         boolean isUsed = false;
-
-        if (text.equals("/info")) {
-            SendMessage info = new SendMessage();
-            info.setChatId(chatId);
-
-            customSender(info);
-            return;
-        }
 
         if (text.equals("/start")) {
             MP.remove(chatId);
@@ -155,210 +147,232 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
         } else if (text.equals("Back")) {
             MP.remove(chatId);
             APPLICATION_REQUEST.remove(chatId);
-            greetingForStudent(chatId);
+
+            switch (user.getRole()) {
+                case ADMIN -> greetingForAdmin(chatId);
+                case TEACHER -> greetingForTeacher(chatId);
+                case STUDENT -> greetingForStudent(chatId);
+            }
             return;
         }
-        if (LearningCenter.IDP.name().equals(text) || LearningCenter.BRITISH_CONSUL.name().equals(text)) {
-            APPLICATION_REQUEST.put(chatId, ApplicationRequest.builder().learningCenter(LearningCenter.valueOf(text)).studentChatId(chatId).attachments(new ArrayList<>()).build());
 
-            SendMessage task = new SendMessage();
+        isUsed = switch (user.getRole()) {
+            case ADMIN -> adminMenu(chatId, text);
+            default -> false;
+        };
 
-            task.setChatId(chatId);
-            task.setReplyMarkup(getReplyForTask());
-            task.setText("Do you want to start with Task 1 or Task 2?");
+        if (isUsed)
+            return;
 
-            customSender(task);
+        if (text.equals(LearningCenter.IDP.name()) || text.equals(LearningCenter.BRITISH_CONSUL.name())) {
+            ApplicationRequest request = ApplicationRequest.builder()
+                    .chatId(chatId)
+                    .createdAt(Instant.now())
+                    .center(LearningCenter.valueOf(text))
+                    .studentId(user.getId())
+                    .attachmentsUrlsForTask1(new ArrayList<>())
+                    .build();
+
+            APPLICATION_REQUEST.put(chatId, request);
+
+            SendMessage askTask = new SendMessage();
+            askTask.setChatId(chatId);
+            askTask.setText("Do you want to start with Task 1 or Task 2?");
+            askTask.setReplyMarkup(getReplyForTask());
+
+            customSender(askTask);
             MP.put(chatId, Operation.ASK_FOR_TASK);
             return;
         } else if (text.equals("Send to Admins")) {
             ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-
-            if (request == null) {
-                greetingForStudent(chatId);
-                return;
-            }
-
             groupSenderService.sendApplicationToGroupWithPhotos(request);
 
-            SendMessage success = new SendMessage();
-            success.setChatId(chatId);
-            success.setText("Thank you for your application.");
+            SendMessage info = new SendMessage();
+            info.setChatId(chatId);
+            info.setReplyMarkup(getReplyForUploadForCenter());
+            info.setText("Thank you for sharing all the details! Your information is valuable and will help future test-takers. Have a great day!");
+            customSender(info);
 
-            customSender(success);
-
-            if (request.getIsSecondOne() == null) {
-                Task nextTask = request.getTask().equals(Task.TASK_1) ? Task.TASK_2 : Task.TASK_1;
-
-                success.setText("Great! Now, could you please provide the question or topic you had for Writing " + (nextTask.equals(Task.TASK_1) ? "Task 1" : "Task 2"));
-                request.setTask(nextTask);
-                request.setIsSecondOne(true);
-                success.setReplyMarkup(getReplyForAnswerAndQuestion());
-
-                MP.put(chatId, Operation.ASK_FOR_QUESTION_FOR_SECOND);
-                customSender(success);
-                return;
-            }
-
+            MP.remove(chatId);
             APPLICATION_REQUEST.remove(chatId);
-            greetingForStudent(chatId);
-            return;
         }
-
-        if (isUsed) return;
 
         if (operation == null) return;
 
         switch (operation) {
-            case ASK_FOR_TASK -> askApplicationTask(chatId, messageId, text);
-            case ASK_FOR_QUESTION -> askApplicationQuestion(chatId, messageId, text);
-            case ASK_FOR_WHEN_TIME -> askApplicationWhenTime(chatId, messageId, text);
-            case ASK_FOR_PHOTO_EXIST -> askApplicationPhotoExist(chatId, messageId, text);
-            case ASK_FOR_QUESTION_FOR_SECOND -> askApplicationQuestionForSecond(chatId, messageId, text);
-            case ASK_FOR_PHOTO_EXIST_FOR_SECOND -> askApplicationPhotoExistForSecond(chatId, messageId, text);
+            case ASK_FOR_TASK -> askForTask(chatId, text);
+            case ASK_FOR_WHEN_TIME -> askForTime(chatId, text);
+            case ASK_FOR_QUESTION -> askForQuestion(chatId, text);
+            case ASK_FOR_QUESTION_TASK_1 -> askForQuestionTask1FromTask2(chatId, text);
+            case ASK_FOR_PHOTO_TASK_1 -> askForPhotoTask1FromTask2(chatId, text);
+            case ASK_FOR_QUESTION_FOR_TASK_1 -> askForQuestionForTask1(chatId, text);
+            case ASK_FOR_TASK_1_EXISTS -> askForTask1Exists(chatId, text);
+            case ASK_FOR_TASK_2_QUESTION_FROM_TASK_1 -> askForQuestionForTask2FromTask1(chatId, text);
+            case ASK_FOR_TASK_2_QUESTION_FROM_TASK_1_PHOTO -> askForPhotoForTask2FromTask1(chatId, text);
         }
     }
 
-    private void askApplicationPhotoExistForSecond(Long chatId, int messageId, String text) {
-        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-        request.setAttachments(new ArrayList<>());
-        if (text.equalsIgnoreCase("Yes")) {
-            SendMessage message = new SendMessage();
-            message.setText("Please, send me your photo or file");
-            message.setChatId(chatId);
-            message.setReplyToMessageId(messageId);
-            message.setReplyMarkup(deleteReply());
-            customSender(message);
+    private boolean adminMenu(Long chatId, String text) {
 
-            MP.put(chatId, Operation.ASK_FOR_PHOTO_FOR_SECOND);
-        } else if (text.equalsIgnoreCase("No")) {
-            request.setTask(request.getTask().equals(Task.TASK_1) ? Task.TASK_2 : Task.TASK_1);
-            groupSenderService.sendApplicationToGroupWithoutPhotos(request);
-            SendMessage message = new SendMessage();
-            message.setChatId(chatId);
-            message.setText("Thank you for sharing all the details! Your information is valuable and will help future test-takers. Have a great day!");
-            message.setReplyToMessageId(messageId);
-            message.setReplyMarkup(getReplyForUploadForCenter());
-            customSender(message);
-
-            MP.remove(chatId);
-            APPLICATION_REQUEST.remove(chatId);
-        } else {
-            SendMessage error = new SendMessage();
-            error.setText("Please, enter Yes or No");
-            error.setChatId(chatId);
-            error.setReplyToMessageId(messageId);
-            customSender(error);
+        switch (text) {
+            case "Manage notification 🔔" -> botNotificationService.manageNotification(chatId);
         }
-    }
 
-    private void askApplicationQuestionForSecond(Long chatId, int messageId, String text) {
-        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-
-        request.setQuestionAsText(text);
-        Task task = request.getTask();
-
-        String question = task.equals(Task.TASK_1) ? "Task 1" : "Task 2";
-
-        SendMessage message = new SendMessage();
-        message.setText("If there was any additional file or image related to " + question + ", could you please upload it as well?");
-        message.setChatId(chatId);
-        message.setReplyToMessageId(messageId);
-        message.setReplyMarkup(getReplyForAskPhoto());
-        customSender(message);
-
-        MP.put(chatId, Operation.ASK_FOR_PHOTO_EXIST_FOR_SECOND);
-    }
-
-    private void documentHandler(Operation operation, Long chatId, Message message) {
-        if (operation != null && operation != Operation.ASK_FOR_PHOTO && operation != Operation.ASK_FOR_PHOTO_FOR_SECOND)
-            return;
-
-        SendMessage info = new SendMessage();
-        info.setChatId(chatId);
-        info.setText("Please wait until the document is downloaded");
-
-        customSender(info);
-
-        Document document = message.getDocument();
-        String fileName = document.getFileName();
-
-        Long attachmentId = downloadDocument(document.getFileId(), chatId, document.getFileUniqueId(), getExtension(fileName));
-
-        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-        request.getAttachments().add(attachmentId);
-
-        SendMessage success = new SendMessage();
-        success.setChatId(chatId);
-        success.setReplyMarkup(getReplyForPhoto());
-        success.setText("Document downloaded ✅. Do you want to upload another one?");
-        customSender(success);
-    }
-
-    private Long downloadDocument(String fileId, Long chatId, String fileUniqueId, String extension) {
-        try {
-            GetFile getFile = new GetFile();
-            getFile.setFileId(fileId);
-
-            var file = execute(getFile);
-            String filePath = file.getFilePath();
-
-            String url = "https://api.telegram.org/file/bot" + getBotToken() + "/" + filePath;
-
-            RestTemplate restTemplate = new RestTemplate();
-            byte[] imageBytes = restTemplate.getForObject(url, byte[].class);
-
-            assert imageBytes != null;
-
-            String name = "document_" + chatId + "_" + Instant.now().getEpochSecond() + "_" + UUID.randomUUID() + "_" + fileUniqueId + "." + extension;
-            String fileName = BASE_URL + "/" + name;
-            Files.write(Paths.get(fileName), imageBytes);
-
-            Attachment attachment = new Attachment();
-            attachment.setFileName(name);
-            attachment.setFilePath(fileName);
-            attachmentRepository.saveAndFlush(attachment);
-
-            return attachment.getId();
-        } catch (TelegramApiException | IOException e) {
-            log.error(e.getMessage());
-            return null;
-        }
-    }
-
-    private static String getExtension(String fileName) {
-        return fileName.substring(fileName.lastIndexOf(".") + 1);
+        return false;
     }
 
     private void photoHandler(Operation operation, Long chatId, Message message) {
-        if (operation != null &&
-                !operation.equals(Operation.ASK_FOR_PHOTO) &&
-                !operation.equals(Operation.ASK_FOR_PHOTO_FOR_SECOND))
+        if (operation != Operation.ASK_FOR_PHOTO && operation != Operation.ASK_FOR_PHOTO_TASK_1_BEFORE_TASK_2) {
+            SendMessage error = new SendMessage();
+            error.setChatId(chatId);
+            error.setText("Why you send me a photo");
+            customSender(error);
             return;
+        }
 
         SendMessage info = new SendMessage();
         info.setChatId(chatId);
-        info.setText("Please wait until the document is downloaded");
-
+        info.setText("Please wait until the photo is downloaded👨‍🏫");
         customSender(info);
 
-        List<PhotoSize> photo = message.getPhoto();
-        PhotoSize photoSize = photo.get(photo.size() - 1);
-        String fileId = photoSize.getFileId();
+        String fileId = message.getPhoto().get(message.getPhoto().size() - 1).getFileId();
+
+        Attachment attachment = downloadToStorage(fileId, chatId);
 
         ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-        List<Long> attachments = request.getAttachments();
+        List<Attachment> attachmentsUrlsForTask1 = request.getAttachmentsUrlsForTask1();
+        attachmentsUrlsForTask1.add(attachment);
+        request.setAttachmentsUrlsForTask1(attachmentsUrlsForTask1);
 
-        Long attachmentId = downloadPhoto(fileId, chatId, photoSize.getFileUniqueId());
-        attachments.add(attachmentId);
+        if (operation == Operation.ASK_FOR_PHOTO_TASK_1_BEFORE_TASK_2) {
+            SendMessage nextTask2Question = new SendMessage();
+            nextTask2Question.setChatId(chatId);
+            nextTask2Question.setReplyMarkup(getReplyForAnswerAndQuestion());
+            nextTask2Question.setText("Thank you! Now, could you please share the question or topic you were given for Writing Task 2?");
+            customSender(nextTask2Question);
+
+            MP.put(chatId, Operation.ASK_FOR_TASK_2_QUESTION_FROM_TASK_1_PHOTO);
+        } else {
+            SendMessage success = new SendMessage();
+            success.setChatId(chatId);
+            success.setText("Photo downloaded. You can upload another one or press 'Send to Admins'");
+            success.setReplyMarkup(getReplyForPhoto());
+            customSender(success);
+        }
+    }
+
+    private void askForPhotoForTask2FromTask1(Long chatId, String question) {
+        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
+        request.setTask2Question(question);
+
+        groupSenderService.sendApplicationToGroupWithPhotos(request);
+
+        SendMessage message = new SendMessage();
+        message.setChatId(chatId);
+        message.setReplyMarkup(getReplyForUploadForCenter());
+        message.setText("Thank you for sharing all the details! Your information is valuable and will help future test-takers. Have a great day!");
+
+        customSender(message);
+
+        MP.remove(chatId);
+        APPLICATION_REQUEST.remove(chatId);
+    }
+
+    private void askForQuestionForTask2FromTask1(Long chatId, String question) {
+        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
+        request.setTask2Question(question);
+
+        SendMessage thanks = new SendMessage();
+        thanks.setChatId(chatId);
+        thanks.setReplyMarkup(getReplyForUploadForCenter());
+        thanks.setText("Thank you for sharing all the details! Your information is valuable and will help future test-takers. Have a great day!");
+
+        customSender(thanks);
+
+        groupSenderService.sendApplicationToGroupWithPhotos(request);
+        MP.remove(chatId);
+        APPLICATION_REQUEST.remove(chatId);
+    }
+
+    private void askForTask1Exists(Long chatId, String text) {
+        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
+
+        if (text.equals("Yes")) {
+            SendMessage message = new SendMessage();
+            message.setChatId(chatId);
+            message.setText("Please send your files");
+            message.setReplyMarkup(deleteReply());
+            request.setIsPhotosExistForTask1(true);
+
+            customSender(message);
+
+            MP.put(chatId, Operation.ASK_FOR_PHOTO_TASK_1_BEFORE_TASK_2);
+        } else {
+            SendMessage nextTask2 = new SendMessage();
+            nextTask2.setChatId(chatId);
+            nextTask2.setText("Thank you! Now, could you please share the question or topic you were given for Writing Task 2?");
+            nextTask2.setReplyMarkup(getReplyForAnswerAndQuestion());
+            customSender(nextTask2);
+
+            MP.put(chatId, Operation.ASK_FOR_TASK_2_QUESTION_FROM_TASK_1);
+        }
+    }
+
+    private void askForQuestionForTask1(Long chatId, String text) {
+        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
+        request.setTask1Question(text);
 
         SendMessage success = new SendMessage();
         success.setChatId(chatId);
-        success.setText("Photo downloaded. You can upload another one or press 'Send to Admins'");
-        success.setReplyMarkup(getReplyForPhoto());
+        success.setText("Do you have any photos attached for Task 1?");
+        success.setReplyMarkup(getReplyForAskPhoto());
         customSender(success);
+
+        MP.put(chatId, Operation.ASK_FOR_TASK_1_EXISTS);
     }
 
-    private Long downloadPhoto(String fileId, Long chatId, String fileUniqueId) {
+    private void documentHandler(Operation operation, Long chatId, Message message) {
+        if (operation != Operation.ASK_FOR_PHOTO && operation != Operation.ASK_FOR_PHOTO_TASK_1_BEFORE_TASK_2) {
+            SendMessage error = new SendMessage();
+            error.setChatId(chatId);
+            error.setText("Why you send me a document");
+            customSender(error);
+            return;
+        }
+
+        SendMessage info = new SendMessage();
+        info.setChatId(chatId);
+        info.setText("Please wait until the document is downloaded👨‍🏫");
+        customSender(info);
+
+        String fileId = message.getDocument().getFileId();
+
+        Attachment attachment = downloadToStorage(fileId, chatId);
+
+        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
+        List<Attachment> attachmentsUrlsForTask1 = request.getAttachmentsUrlsForTask1();
+        attachmentsUrlsForTask1.add(attachment);
+        request.setAttachmentsUrlsForTask1(attachmentsUrlsForTask1);
+
+        if (operation == Operation.ASK_FOR_PHOTO_TASK_1_BEFORE_TASK_2) {
+            SendMessage nextTask2Question = new SendMessage();
+            nextTask2Question.setChatId(chatId);
+            nextTask2Question.setReplyMarkup(getReplyForAnswerAndQuestion());
+            nextTask2Question.setText("Thank you! Now, could you please share the question or topic you were given for Writing Task 2?");
+            customSender(nextTask2Question);
+
+            MP.put(chatId, Operation.ASK_FOR_TASK_2_QUESTION_FROM_TASK_1_PHOTO);
+        } else {
+            SendMessage success = new SendMessage();
+            success.setChatId(chatId);
+            success.setText("Photo downloaded. You can upload another one or press 'Send to Admins'");
+            success.setReplyMarkup(getReplyForPhoto());
+            customSender(success);
+        }
+    }
+
+    @SneakyThrows
+    private Attachment downloadToStorage(String fileId, Long chatId) {
         try {
             GetFile getFile = new GetFile();
             getFile.setFileId(fileId);
@@ -373,141 +387,139 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
 
             assert imageBytes != null;
 
-            String name = "photo_" + chatId + "_" + Instant.now().getEpochSecond() + "_" + UUID.randomUUID() + "_" + fileUniqueId + ".png";
-            String fileName = BASE_URL + "/" + name;
+            String name = "photo_" + chatId + "_" + Instant.now().getEpochSecond() + getExtension(filePath);
+            String fileName = BASE_URL + "\\" + name;
+
             Files.write(Paths.get(fileName), imageBytes);
 
             Attachment attachment = new Attachment();
-            attachment.setFileName(name);
             attachment.setFilePath(fileName);
+            attachment.setFileName(name);
 
             attachmentRepository.saveAndFlush(attachment);
 
-            return attachment.getId();
+            return attachment;
         } catch (TelegramApiException | IOException e) {
             log.error(e.getMessage());
-            return null;
         }
+        return null;
     }
 
-    private void askApplicationPhotoExist(Long chatId, int messageId, String text) {
+    private String getExtension(String filePath) {
+        return filePath.substring(filePath.lastIndexOf(".")); // -> for example ".jpg"
+    }
+
+    private void askForPhotoTask1FromTask2(Long chatId, String exists) {
         ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-        if (text.equalsIgnoreCase("Yes")) {
+
+        if (exists.equals("Yes")) {
+            request.setIsPhotosExistForTask1(true);
+
             SendMessage message = new SendMessage();
-            message.setText("Please, send me your photos");
             message.setChatId(chatId);
-            message.setReplyToMessageId(messageId);
+            message.setText("Please send your files");
             message.setReplyMarkup(deleteReply());
-            customSender(message);
 
+            customSender(message);
             MP.put(chatId, Operation.ASK_FOR_PHOTO);
-        } else if (text.equalsIgnoreCase("No")) {
-            request.setStudentChatId(chatId);
-            groupSenderService.sendApplicationToGroupWithoutPhotos(request);
-
-            SendMessage message = new SendMessage();
-            message.setChatId(chatId);
-
-            Task task = request.getTask().equals(Task.TASK_1) ? Task.TASK_2 : Task.TASK_1;
-            String nextTask = task.equals(Task.TASK_1) ? "Task 1" : "Task 2";
-
-            message.setText("Great! Now, could you please provide the question or topic you had for Writing " + nextTask + "?");
-            request.setTask(task);
-            request.setIsSecondOne(true);
-            message.setReplyMarkup(getReplyForAnswerAndQuestion());
-
-            MP.put(chatId, Operation.ASK_FOR_QUESTION_FOR_SECOND);
-            customSender(message);
         } else {
-            SendMessage error = new SendMessage();
-            error.setText("Please, choose Yes or No");
-            error.setChatId(chatId);
-            error.setReplyToMessageId(messageId);
-            customSender(error);
+            groupSenderService.sendApplicationToGroupWithPhotos(request);
+            SendMessage end = new SendMessage();
+            end.setChatId(chatId);
+            end.setReplyMarkup(getReplyForUploadForCenter());
+            end.setText("Thank you for sharing all the details! Your information is valuable and will help future test-takers. Have a great day!");
+            customSender(end);
+
+            MP.remove(chatId);
+            APPLICATION_REQUEST.remove(chatId);
         }
     }
 
-    private void askApplicationWhenTime(Long chatId, int messageId, String text) {
+    private void askForQuestionTask1FromTask2(Long chatId, String question) {
         ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-        request.setWhenTime(text);
+        request.setTask1Question(question);
 
-        Task task = request.getTask();
-        String nextTask = task.equals(Task.TASK_1) ? "Task 1" : "Task 2";
+        SendMessage askPhotoExists = new SendMessage();
+        askPhotoExists.setChatId(chatId);
+        askPhotoExists.setText("Do you have any photos attached for Task 1?");
+        askPhotoExists.setReplyMarkup(getReplyForAskPhoto());
 
-
-        SendMessage message = new SendMessage();
-        message.setText("Thank you! Now, could you please share the exact question or topic you were given for Writing " + nextTask + "?");
-        message.setChatId(chatId);
-        message.setReplyToMessageId(messageId);
-        message.setReplyMarkup(getReplyForAnswerAndQuestion());
-        customSender(message);
-
-        MP.put(chatId, Operation.ASK_FOR_QUESTION);
+        customSender(askPhotoExists);
+        MP.put(chatId, Operation.ASK_FOR_PHOTO_TASK_1);
     }
 
-    private void askApplicationQuestion(Long chatId, int messageId, String text) {
+    private void askForQuestion(Long chatId, String question) {
         ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-        request.setQuestionAsText(text);
 
-        String nextTask = request.getTask().equals(Task.TASK_1) ? "Task 1" : "Task 2";
+        if (request.isTask1Doing()) {
+            request.setTask1Question(question);
+        } else {
+            request.setTask2Question(question);
+            request.setTask1Doing(true);
 
-        SendMessage message = new SendMessage();
-        message.setText("If there was any graph, chart, or image provided with " + nextTask + ", could you please upload a picture or file of it?");
-        message.setChatId(chatId);
-        message.setReplyToMessageId(messageId);
-        message.setReplyMarkup(getReplyForAskPhoto());
-        customSender(message);
+            SendMessage askQuestionTask1 = new SendMessage();
+            askQuestionTask1.setChatId(chatId);
+            askQuestionTask1.setText("Thank you! Now, could you please share the question or topic you were given for Writing Task 1?");
+            askQuestionTask1.setReplyMarkup(getReplyForAnswerAndQuestion());
 
-        MP.put(chatId, Operation.ASK_FOR_PHOTO_EXIST);
+            customSender(askQuestionTask1);
+            MP.put(chatId, Operation.ASK_FOR_QUESTION_TASK_1);
+        }
     }
 
-    private void askApplicationTask(Long chatId, int messageId, String text) {
-        if (!(text.equalsIgnoreCase(Task.TASK_1.name()) || text.equalsIgnoreCase(Task.TASK_2.name()))) {
+    private void askForTime(Long chatId, String text) {
+        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
+        request.setExamDate(text);
+
+        String task;
+
+        if (request.isTask1Doing())
+            task = "Task 1";
+        else
+            task = "Task 2";
+
+        SendMessage askForQuestion = new SendMessage();
+        askForQuestion.setChatId(chatId);
+        askForQuestion.setText("Thank you! Now, could you please share the question or topic you were given for Writing " + task);
+        askForQuestion.setReplyMarkup(getReplyForAnswerAndQuestion());
+
+        customSender(askForQuestion);
+
+        if (request.isTask2Doing())
+            MP.put(chatId, Operation.ASK_FOR_QUESTION);
+        else
+            MP.put(chatId, Operation.ASK_FOR_QUESTION_FOR_TASK_1);
+    }
+
+    private void askForTask(Long chatId, String text) {
+        if (!(text.equals(Task.TASK_1.name()) || text.equals(Task.TASK_2.name()))) {
             SendMessage error = new SendMessage();
-            error.setText("Wrong task. Please choose again");
             error.setChatId(chatId);
-            error.setReplyToMessageId(messageId);
+            error.setText("Please select Task 1 or Task 2");
+            error.setReplyMarkup(getReplyForTask());
             customSender(error);
             return;
         }
 
+        Task chosen = Task.valueOf(text);
+
         ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-        request.setTask(Task.valueOf(text));
 
-        Task task = request.getTask();
+        if (chosen == Task.TASK_1) {
+            request.setTask1Doing(true);
+            request.setTask1(chosen);
+        } else {
+            request.setTask2Doing(true);
+            request.setTask2(chosen);
+        }
 
-        SendMessage nextStep = new SendMessage();
-        nextStep.setChatId(chatId);
-        nextStep.setText("Let's start. Could you please tell me the date when you took your IELTS exam? (28 April 2024)");
-        nextStep.setReplyMarkup(getReplyForTask());
-        nextStep.setReplyMarkup(getReplyForAnswerAndQuestion());
-        customSender(nextStep);
+        SendMessage askWhenTime = new SendMessage();
+        askWhenTime.setChatId(chatId);
+        askWhenTime.setReplyMarkup(getReplyForAnswerAndQuestion());
+        askWhenTime.setText("Let's start. Could you please tell me the date when you took your IELTS exam? (28 April 2024)");
 
+        customSender(askWhenTime);
         MP.put(chatId, Operation.ASK_FOR_WHEN_TIME);
-    }
-
-    private void askApplicationCategory(Long chatId, int messageId, String learningCenter) {
-        if (!(learningCenter.equalsIgnoreCase(LearningCenter.IDP.name()) || learningCenter.equalsIgnoreCase(LearningCenter.BRITISH_CONSUL.name()))) {
-            SendMessage error = new SendMessage();
-            error.setText("Wrong learning center. Please choose again");
-            error.setChatId(chatId);
-            error.setReplyToMessageId(messageId);
-            customSender(error);
-            return;
-        }
-
-        APPLICATION_REQUEST.put(chatId, ApplicationRequest.builder().attachments(new LinkedList<>()).build());
-
-        ApplicationRequest request = APPLICATION_REQUEST.get(chatId);
-        request.setLearningCenter(LearningCenter.valueOf(learningCenter));
-
-        MP.put(chatId, Operation.ASK_FOR_TASK);
-
-        SendMessage nextStep = new SendMessage();
-        nextStep.setChatId(chatId);
-        nextStep.setText("Choose task in which you wrote questions.");
-        nextStep.setReplyMarkup(getReplyForTask());
-        customSender(nextStep);
     }
 
     private boolean greetingForTeacher(Long chatId) {
@@ -528,10 +540,12 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
     }
 
     private boolean greetingForAdmin(Long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Choose");
-        customSender(message);
+        SendMessage adminMSG = new SendMessage();
+        adminMSG.setChatId(chatId);
+        adminMSG.setText("Choose");
+        adminMSG.setReplyMarkup(getReplyForAdminMenu());
+
+        customSender(adminMSG);
         return true;
     }
 

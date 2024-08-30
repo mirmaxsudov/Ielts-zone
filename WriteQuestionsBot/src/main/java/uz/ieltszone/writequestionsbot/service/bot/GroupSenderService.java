@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.DefaultAbsSender;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
-import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import uz.ieltszone.writequestionsbot.config.BotConfiguration;
@@ -38,7 +37,7 @@ public class GroupSenderService extends DefaultAbsSender {
     @Value("${bot.group.id}")
     private String GROUP_ID;
 
-    private final static String BASE_FILE_URL = "/home/ielts_zone/bot/write_questions_bot/files";
+    private final static String BASE_FILE_URL = "/home/ielts_zone/bot/write_questions_bot";
 
     protected GroupSenderService(BotConfiguration botConfiguration, UserService userService, AttachmentRepository attachmentRepository) {
         super(new DefaultBotOptions());
@@ -53,38 +52,14 @@ public class GroupSenderService extends DefaultAbsSender {
     }
 
     @SneakyThrows
-    public void sendApplicationToGroupWithoutPhotos(ApplicationRequest request) {
-        String url = generateTxtFileStudent(request);
-
-        User user = userService.getByChatId(request.getStudentChatId());
-
-        SendDocument document = new SendDocument();
-        document.setDocument(
-                new InputFile(
-                        new File(url),
-                        generateFileName(user)
-                )
-        );
-        document.setChatId(GROUP_ID);
-        document.setParseMode(ParseMode.MARKDOWN);
-        document.setCaption(generateFileCaption(request, user));
-
-        execute(document);
-
-        CompletableFuture.runAsync(
-                () -> deleteFile(url)
-        );
-    }
-
-    @SneakyThrows
     public void sendApplicationToGroupWithPhotos(ApplicationRequest request) {
-        User user = userService.getByChatId(request.getStudentChatId());
-        String URL = BASE_FILE_URL + "/" + System.currentTimeMillis() + "_" + UUID.randomUUID();
+        User user = userService.getByChatId(request.getChatId());
+        String URL = BASE_FILE_URL + "\\" + user.getFirstName() + "___" + UUID.randomUUID();
+
         Path target = Paths.get(URL);
 
-        if (!Files.exists(target)) {
+        if (!Files.exists(target))
             Files.createDirectory(target);
-        }
 
         String textFileURL = generateTxtFileStudent(request);
         Path sourcePath = Paths.get(textFileURL);
@@ -93,10 +68,7 @@ public class GroupSenderService extends DefaultAbsSender {
 
         Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-        for (Long attachmentId : request.getAttachments()) {
-            Attachment attachment = attachmentRepository.findById(attachmentId)
-                    .orElseThrow(() -> new RuntimeException("Attachment not found"));
-
+        for (Attachment attachment : request.getAttachmentsUrlsForTask1()) {
             Path attachmentSourcePath = Paths.get(attachment.getFilePath());
             Path attachmentTargetPath = target.resolve(Paths.get(attachment.getFileName()));
 
@@ -109,7 +81,6 @@ public class GroupSenderService extends DefaultAbsSender {
         SendDocument document = new SendDocument();
         document.setCaption(generateFileCaption(request, user));
         document.setChatId(GROUP_ID);
-        document.setParseMode(ParseMode.MARKDOWN);
         document.setDocument(
                 new InputFile(
                         new File(outputZipFile),
@@ -128,9 +99,8 @@ public class GroupSenderService extends DefaultAbsSender {
 
     @SneakyThrows
     public static void deleteDirectoryRecursively(Path directory) {
-        if (Files.notExists(directory)) {
+        if (Files.notExists(directory))
             return;
-        }
 
         Files.walkFileTree(directory, new SimpleFileVisitor<>() {
             @Override
@@ -148,13 +118,17 @@ public class GroupSenderService extends DefaultAbsSender {
     }
 
     private String generateFileCaption(ApplicationRequest request, User user) {
-        return "New application";
-    }
-
-    private String generateFileName(User user) {
-        return user.getFirstName() + "-" + LocalDateTime.now().format(
-                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        ) + ".txt";
+        return String.format(
+                """
+                         #%s #TASK_1 #TASK_2
+                                \s
+                         Student name - %s
+                         Exam time - %s
+                        \s""",
+                request.getCenter(),
+                user.getFirstName(),
+                request.getExamDate()
+        );
     }
 
     private void deleteFile(String url) {
@@ -168,45 +142,61 @@ public class GroupSenderService extends DefaultAbsSender {
 
     @SneakyThrows(IOException.class)
     public String generateTxtFileStudent(ApplicationRequest request) {
-        User user = userService.getByChatId(request.getStudentChatId());
+        User user = userService.getByChatId(request.getChatId());
 
         Path base = Paths.get(BASE_FILE_URL);
         if (!Files.exists(base))
             Files.createDirectories(base);
 
-        String fileName = System.currentTimeMillis() + "_" + request.getStudentChatId() + ".txt";
 
-        StringBuilder sb = new StringBuilder();
+        String fileName = user.getFirstName() + "_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm")) + "_file" + ".txt";
 
-        sb.append(String.format(
-                        """
-                                 Student's name and surname - %s %s
-                                 Submitted time - %s
-                                                                \s
-                                 Student's exam place - %s
-                                 Type of task - %s
-                                                                \s
-                                 Student's question - '%s'
-                                \s""", user.getFirstName(), user.getLastName() == null ? "" :
-                                user.getLastName(), request.getWhenTime(), request.getLearningCenter(),
-                        request.getTask(), request.getQuestionAsText()
-                )
+        String innerInfo = String.format(
+                """
+                         Student info:
+                             Id: %s
+                             Name: %s
+                             Phone number: %s
+                             Surname: %s
+                             Username: %s
+                             Role: STUDENT
+                             Sent date: %s
+                                                \s
+                         Exam info:
+                             Exam center: '%s'
+                             Exam date: '%s'
+                             Exam tasks: Task 1 and Task 2
+                                                \s
+                         Task 1
+                             Question: '%s'
+                             Size of files for task 1: %s
+                                                \s
+                         Task 2
+                             Question: '%s'
+                        \s""", user.getId(), user.getFirstName(), user.getPhoneNumber(),
+                user.getLastName() == null ? "None" : user.getLastName(),
+                user.getUsername() == null ? "None" : user.getUsername(),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                request.getCenter(),
+                request.getExamDate().formatted(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                request.getTask1Question(),
+                request.getAttachmentsUrlsForTask1().size(),
+                request.getTask2Question()
         );
 
         String absoluteUrl = BASE_FILE_URL + "\\" + fileName;
         Path path = Paths.get(absoluteUrl);
 
         Files.createDirectories(path.getParent());
-        Files.write(path, sb.toString().getBytes());
+        Files.writeString(path, innerInfo);
 
         return absoluteUrl;
     }
 
     public static void zipDirectory(String sourceDir, String outputZipFile) throws IOException {
         File dir = new File(sourceDir);
-        if (!dir.exists() || !dir.isDirectory()) {
+        if (!dir.exists() || !dir.isDirectory())
             throw new IllegalArgumentException("The provided path is not a valid directory.");
-        }
 
         try (FileOutputStream fos = new FileOutputStream(outputZipFile);
              ZipOutputStream zos = new ZipOutputStream(fos)) {
@@ -216,9 +206,8 @@ public class GroupSenderService extends DefaultAbsSender {
     }
 
     private static void zipFilesRecursively(File fileToZip, String fileName, ZipOutputStream zos) throws IOException {
-        if (fileToZip.isHidden()) {
+        if (fileToZip.isHidden())
             return;
-        }
 
         if (fileToZip.isDirectory()) {
             if (fileName.endsWith("/")) {

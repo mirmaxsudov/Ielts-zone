@@ -135,4 +135,46 @@ public interface ReplyMarkup {
         remove.setRemoveKeyboard(true);
         return remove;
     }
+
+    // for Admin
+
+    default ReplyKeyboardMarkup getReplyForAdminMenu() {
+        ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
+        markup.setSelective(true);
+        markup.setResizeKeyboard(true);
+
+        KeyboardButton notificationManager = new KeyboardButton();
+        notificationManager.setText("Manage notification 🔔");
+
+        KeyboardButton manageUsers = new KeyboardButton();
+        manageUsers.setText("Manage users 👥");
+
+        KeyboardRow rw1 = new KeyboardRow();
+        rw1.add(notificationManager);
+        rw1.add(manageUsers);
+
+        markup.setKeyboard(List.of(rw1));
+        return markup;
+    }
+
+    default ReplyKeyboardMarkup getReplyMarkupForNotificationManu() {
+        ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
+        markup.setSelective(true);
+        markup.setResizeKeyboard(true);
+
+        KeyboardButton create = new KeyboardButton();
+        create.setText("Create notification 🔔");
+
+        KeyboardButton back = new KeyboardButton();
+        back.setText("Back");
+
+        KeyboardRow rw1 = new KeyboardRow();
+        KeyboardRow rw2 = new KeyboardRow();
+        rw1.add(create);
+        rw2.add(back);
+
+        markup.setKeyboard(List.of(rw1, rw2));
+
+        return markup;
+    }
 }
