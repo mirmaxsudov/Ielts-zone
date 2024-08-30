@@ -87,11 +87,13 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
         }
     }
 
-    private final Map<Long, Operation> MP = new HashMap<>();
+    protected static Map<Long, Operation> MP = new HashMap<>();
     private final Map<Long, ApplicationRequest> APPLICATION_REQUEST = new HashMap<>();
 
     private void processUpdate(Message message) {
         final Long chatId = message.getChatId();
+
+        log.info("ChatId: {} Message: {}", chatId, message.getText());
 
         if (chatId.toString().equals(GROUP_ID) || chatId < 0)
             return;
@@ -135,7 +137,7 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
             return;
         }
 
-        boolean isUsed = false;
+        boolean isUsed;
 
         if (text.equals("/start")) {
             MP.remove(chatId);
@@ -209,13 +211,36 @@ public class TelegramBotService extends TelegramLongPollingBot implements ReplyM
             case ASK_FOR_TASK_1_EXISTS -> askForTask1Exists(chatId, text);
             case ASK_FOR_TASK_2_QUESTION_FROM_TASK_1 -> askForQuestionForTask2FromTask1(chatId, text);
             case ASK_FOR_TASK_2_QUESTION_FROM_TASK_1_PHOTO -> askForPhotoForTask2FromTask1(chatId, text);
+            // for notification
+            case ASK_NOTIFICATION_BODY -> askNotificationBody(chatId, text);
+            case ASK_WILL_SEND_TO_FOR_NOTIFICATION -> askWillSendToForNotification(chatId, text);
+            case ASK_FOR_PHOTO_EXIST_FOR_NOTIFICATION -> askForPhotoExistForNotification(chatId, text);
         }
+    }
+
+    private void askForPhotoExistForNotification(Long chatId, String photoExists) {
+        if (photoExists.equalsIgnoreCase("yes")) {
+            botNotificationService.askForPhoto(chatId);
+        } else {
+            botNotificationService.askToPerformToSendToWithoutPhoto(chatId);
+        }
+    }
+
+    private void askWillSendToForNotification(Long chatId, String willSendToRole) {
+        botNotificationService.askWillSendTo(chatId, willSendToRole);
+    }
+
+    private void askNotificationBody(Long chatId, String notificationBody) {
+        botNotificationService.askNotificationBody(chatId, notificationBody);
     }
 
     private boolean adminMenu(Long chatId, String text) {
 
+        log.info("Admin menu: " + text);
+
         switch (text) {
             case "Manage notification 🔔" -> botNotificationService.manageNotification(chatId);
+            case "Create notification 🔔" -> botNotificationService.createNotification(chatId);
         }
 
         return false;

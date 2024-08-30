@@ -31,7 +31,7 @@ public class ExamController {
     }
 
     @GetMapping("/get-exams-by-teacher-id")
-    public ApiResponse<TeachersExamsResponse> getExamsByTeacherId(UserDetailsDTO userDetailsDTO) {
+    public ApiResponse<TeachersExamsResponse> getExamsByTeacherId(@CurrentUser UserDetailsDTO userDetailsDTO) {
         return examService.getExamsByTeacherId(userDetailsDTO.getId());
     }
 

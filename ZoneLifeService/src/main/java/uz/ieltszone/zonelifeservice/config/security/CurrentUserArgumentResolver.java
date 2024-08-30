@@ -27,9 +27,8 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
         String token = request.getHeader("Authorization");
 
-        if (token != null && token.startsWith("Bearer ")) {
+        if (token != null && token.startsWith("Bearer "))
             token = token.substring(7);
-        }
 
         return userFeign.getUserDetails("Bearer " + token);
     }

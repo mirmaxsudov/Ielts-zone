@@ -1,11 +1,14 @@
 package uz.ieltszone.writequestionsbot.service.bot.replyMarkups;
 
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import uz.ieltszone.writequestionsbot.entity.enums.LearningCenter;
 import uz.ieltszone.writequestionsbot.entity.enums.Task;
+import uz.ieltszone.writequestionsbot.entity.enums.UserRole;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -174,6 +177,57 @@ public interface ReplyMarkup {
         rw2.add(back);
 
         markup.setKeyboard(List.of(rw1, rw2));
+
+        return markup;
+    }
+
+    default ReplyKeyboardMarkup getReplyMarkupForWillSendTo(UserRole[] roles) {
+        ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
+        markup.setSelective(true);
+        markup.setResizeKeyboard(true);
+
+        List<KeyboardRow> rows = new LinkedList<>();
+
+        for (UserRole role : roles) {
+            KeyboardRow row = new KeyboardRow();
+            row.add(role.name());
+            rows.add(row);
+        }
+
+        KeyboardRow back = new KeyboardRow();
+        back.add("Back");
+        rows.add(back);
+
+        markup.setKeyboard(rows);
+
+        return markup;
+    }
+
+    default ReplyKeyboardMarkup getReplyMarkupForPhotoExistsForNotification() {
+        ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
+        markup.setSelective(true);
+        markup.setResizeKeyboard(true);
+
+        KeyboardRow row1 = new KeyboardRow();
+        row1.add("Yes");
+        row1.add("No");
+
+        markup.setKeyboard(List.of(row1));
+        return markup;
+    }
+
+    default InlineKeyboardMarkup getPerformToSendInlineMarkup(Long notificationId) {
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+
+        InlineKeyboardButton send = new InlineKeyboardButton();
+        send.setText("Send ✅");
+        send.setCallbackData("SEND_NOTIFICATION: " + notificationId);
+
+        InlineKeyboardButton remove = new InlineKeyboardButton();
+        remove.setText("Remove ❌");
+        remove.setCallbackData("REMOVE_NOTIFICATION: " + notificationId);
+
+        markup.setKeyboard(List.of(List.of(send)));
 
         return markup;
     }
