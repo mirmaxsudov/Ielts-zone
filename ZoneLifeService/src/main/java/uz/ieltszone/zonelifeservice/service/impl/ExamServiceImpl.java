@@ -14,6 +14,9 @@ import uz.ieltszone.zonelifeservice.entity.dto.request.ResultRequest;
 import uz.ieltszone.zonelifeservice.entity.dto.response.ResultResponse;
 import uz.ieltszone.zonelifeservice.entity.dto.response.TeacherResponse;
 import uz.ieltszone.zonelifeservice.entity.dto.response.teacher_exam.TeachersExamsResponse;
+import uz.ieltszone.zonelifeservice.entity.enums.ExamLevel;
+import uz.ieltszone.zonelifeservice.entity.enums.ExamType;
+import uz.ieltszone.zonelifeservice.entity.enums.RateStatus;
 import uz.ieltszone.zonelifeservice.entity.payload.TotalSums;
 import uz.ieltszone.zonelifeservice.exceptions.CustomNotFoundException;
 import uz.ieltszone.zonelifeservice.payload.ApiResponse;
@@ -67,7 +70,6 @@ public class ExamServiceImpl implements ExamService {
         resultService.save(resultRequests, exam);
 
 //        save exam again with avg values
-
         TotalSums totalSums = new TotalSums();
 
         float listeningTotal = 0f;
@@ -93,7 +95,7 @@ public class ExamServiceImpl implements ExamService {
         exam.setListening(totalSums.getListeningTotal() / resultRequests.size());
 
         exam.setTotal(
-                (exam.getListening() + exam.getReading() + exam.getSpeaking() + exam.getWriting()) / 4
+                (exam.getListening() + exam.getReading() + exam.getSpeaking() + exam.getWriting())
         );
 
         examRepository.save(exam);
@@ -101,7 +103,7 @@ public class ExamServiceImpl implements ExamService {
 //      get monthly rate for exam based month
 
         Long teacherId = examRequest.getTeacherId();
-        Rate rate = rateService.getByTeacherIdAndMonth(teacherId, getMonth(exam.getExamDate()));
+        Rate rate = rateService.getByTeacherIdAndMonthAndRateLevel(teacherId, getMonth(exam.getExamDate()), getRateStatus(exam.getExamLevel()));
 
 //      if there is no monthly rating for current month, save it
         if (rate == null) {
@@ -113,7 +115,7 @@ public class ExamServiceImpl implements ExamService {
 
             rateService.save(rateRequest);
 
-            rate = rateService.getByTeacherIdAndMonth(teacherId, getMonth(exam.getExamDate()));
+            rate = rateService.getByTeacherIdAndMonthAndRateLevel(teacherId, getMonth(exam.getExamDate()), getRateStatus(exam.getExamLevel()));
         }
 
         exam.setRate(rate);
@@ -127,13 +129,20 @@ public class ExamServiceImpl implements ExamService {
         return new ApiResponse<>().success("Successfully saved");
     }
 
-    private void refreshRateByTeacherId(Rate rate) {
-        List<Exam> exams = rate.getExams();
+    private RateStatus getRateStatus(ExamLevel level) {
+        return level.equals(ExamLevel.IELTS) ? RateStatus.IELTS : RateStatus.GENERAL;
+    }
 
-        float examsAvg = exams.stream()
+    private void refreshRateByTeacherId(Rate rate) {
+        RateStatus status = rate.getStatus();
+
+        List<Exam> exams = rate.getExams().stream()
+                .filter(exam -> getRateStatus(exam.getExamLevel()).equals(status))
+                .toList();
+
+        final float examsAvg = exams.stream()
                 .map(Exam::getTotal)
                 .reduce(0f, Float::sum) / exams.size();
-
 
         rate.setAvg(examsAvg);
         rateService.save(rate);
@@ -151,7 +160,7 @@ public class ExamServiceImpl implements ExamService {
         resultService.deleteByExamId(examId);
         examRepository.deleteById(examId);
 
-        Rate rate = rateService.getByTeacherIdAndMonth(teacherId, exam.getExamDate().getMonth());
+        Rate rate = rateService.getByTeacherIdAndMonthAndRateLevel(teacherId, getMonth(exam.getExamDate()), getRateStatus(exam.getExamLevel()));
 
         refreshRateByTeacherId(rate);
 

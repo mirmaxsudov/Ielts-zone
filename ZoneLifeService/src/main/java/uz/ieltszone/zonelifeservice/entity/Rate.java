@@ -2,6 +2,7 @@ package uz.ieltszone.zonelifeservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import uz.ieltszone.zonelifeservice.entity.enums.RateStatus;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -21,6 +22,7 @@ public class Rate {
     private LocalDate date;
     private Month month;
     private Float avg;
+    private RateStatus status;
     @OneToMany(mappedBy = "rate", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Exam> exams;
 }

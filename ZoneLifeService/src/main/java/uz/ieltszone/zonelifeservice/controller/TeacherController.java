@@ -27,7 +27,7 @@ public class TeacherController {
         return teacherService.getRatingForTeacherAndAllTheTime(teacherId);
     }
 
-    @GetMapping("/get-month-of-teachers")
+    @GetMapping("/get-month-of-teachers-for-ielts")
     public ResponseEntity<ApiResponse<MonthsTeacherResponse>> getMonthOfTeachers() {
         return ResponseEntity.ok(teacherService.getMonthOfTeachers());
     }

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import uz.ieltszone.zonelifeservice.entity.Rate;
 import uz.ieltszone.zonelifeservice.entity.dto.request.RateRequest;
+import uz.ieltszone.zonelifeservice.entity.enums.RateStatus;
 import uz.ieltszone.zonelifeservice.repository.RateRepository;
 import uz.ieltszone.zonelifeservice.service.base.RateService;
 
@@ -16,8 +17,8 @@ public class RateServiceImpl implements RateService {
     private final RateRepository rateRepository;
 
     @Override
-    public Rate getByTeacherIdAndMonth(Long teacherId, Month month) {
-        return rateRepository.findByTeacherIdAndMonth(teacherId, month);
+    public Rate getByTeacherIdAndMonthAndRateLevel(Long teacherId, Month month, RateStatus status) {
+        return rateRepository.findByTeacherIdAndMonthRateLevel(teacherId, month, status);
     }
 
     @Override
