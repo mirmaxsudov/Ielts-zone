@@ -23,6 +23,6 @@ public interface UserFeign {
     @GetMapping("/api/v1/user/auth/me")
     UserDetailsDTO getUserDetails(@RequestHeader("Authorization") String token);
 
-    @GetMapping("/api/v1/user/all")
-    List<TeacherResponse> getAll();
+    @GetMapping("/api/v1/user/all-teachers")
+    List<TeacherResponse> getAllTeachers();
 }

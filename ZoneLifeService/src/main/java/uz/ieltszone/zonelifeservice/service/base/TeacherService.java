@@ -10,5 +10,5 @@ public interface TeacherService {
 
     ApiResponse<Long> getRatingForTeacherAndAllTheTime(Long teacherId);
 
-    ApiResponse<MonthsTeacherResponse> getMonthOfTeachers();
+    ApiResponse<MonthsTeacherResponse> getMonthOfTeachersForIELTS();
 }

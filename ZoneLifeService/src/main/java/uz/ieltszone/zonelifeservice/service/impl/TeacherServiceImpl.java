@@ -47,47 +47,16 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public ApiResponse<MonthsTeacherResponse> getMonthOfTeachers() {
-        List<TeacherResponse> teachers = userFeign.getAll();
+    public ApiResponse<MonthsTeacherResponse> getMonthOfTeachersForIELTS() {
+        List<TeacherResponse> teachers = userFeign.getAllTeachers();
 
         if (teachers == null || teachers.isEmpty())
             throw new CustomNotFoundException("Teachers not found!");
 
-        Map<Long, RateTeacherBack> mpRate = new HashMap<>();
+        Month currentMonth = LocalDate.now().getMonth();
 
-        Month month = LocalDate.now().getMonth();
-        for (TeacherResponse teacher : teachers) {
-            Rate rate = rateService.getByTeacherIdAndMonth(teacher.getId(), month);
 
-            RateTeacherBack rateTeacherBack = new RateTeacherBack();
-            rateTeacherBack.setRate(rate);
-            rateTeacherBack.setTeacherResponse(teacher);
-        }
-
-        Map<Long, RateTeacherBack> sortedMap = sortByAvgDescending(mpRate);
-
-        MonthsTeacherResponse monthsTeacherResponse = new MonthsTeacherResponse();
-        monthsTeacherResponse.setMonth(month);
-
-        List<TeacherResponseForMonth> topThreeTeachers = new ArrayList<>();
-
-        for (Map.Entry<Long, RateTeacherBack> entry : sortedMap.entrySet()) {
-            if (topThreeTeachers.size() == 3) break;
-
-            RateTeacherBack rateTeacherBack = entry.getValue();
-
-            TeacherResponseForMonth teacher = new TeacherResponseForMonth();
-            teacher.setAvg(rateTeacherBack.getRate().getAvg());
-            teacher.setResponse(rateTeacherBack.getTeacherResponse());
-
-            topThreeTeachers.add(teacher);
-        }
-
-        monthsTeacherResponse.setTeachers(topThreeTeachers);
-
-        return new ApiResponse<MonthsTeacherResponse>()
-                .success("Teachers found",
-                        monthsTeacherResponse);
+        return null;
     }
 
     public static Map<Long, RateTeacherBack> sortByAvgDescending(Map<Long, RateTeacherBack> unsortedMap) {

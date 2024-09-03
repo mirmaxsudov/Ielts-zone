@@ -7,6 +7,7 @@ import uz.ieltszone.ieltszoneuserservice.exceptions.CustomBadRequestException;
 import uz.ieltszone.ieltszoneuserservice.exceptions.CustomNotFoundException;
 import uz.ieltszone.ieltszoneuserservice.feign.AttachmentFeign;
 import uz.ieltszone.ieltszoneuserservice.model.entity.User;
+import uz.ieltszone.ieltszoneuserservice.model.entity.enums.UserRole;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.UserRequest;
 import uz.ieltszone.ieltszoneuserservice.model.entity.request.UserRequestUpdate;
 import uz.ieltszone.ieltszoneuserservice.model.entity.response.UserResponse;
@@ -131,5 +132,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsById(Long userId) {
         return userRepository.existsById(userId);
+    }
+
+    @Override
+    public Iterable<UserResponse> getAllTeachers() {
+        return userRepository.findAll()
+                .stream()
+                .filter(user -> user.getRole().equals(UserRole.TEACHER))
+                .map(userMapper::toResponse)
+                .toList();
     }
 }

@@ -25,4 +25,6 @@ public interface UserService {
     ApiResponse<UserResponse> updateAttachment(Long userId, Long attachmentId);
 
     boolean existsById(Long userId);
+
+    Iterable<UserResponse> getAllTeachers();
 }

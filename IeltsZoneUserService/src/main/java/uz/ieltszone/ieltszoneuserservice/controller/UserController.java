@@ -69,6 +69,12 @@ public class UserController {
         return userService.getAll();
     }
 
+    @GetMapping("/all-teachers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Iterable<UserResponse> getAllTeachers() {
+        return userService.getAllTeachers();
+    }
+
     @PreAuthorize("hasAnyRole('ADMIN', 'MANEGER', 'TEACHER')")
     @PatchMapping("/update-img/{userId}")
     public ApiResponse<UserResponse> updateAttachment(@AuthenticationPrincipal User user, @RequestParam("attachmentId") Long attachmentId) {
